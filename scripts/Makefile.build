@@ -159,9 +159,9 @@ ifneq ($(KBUILD_CHECKSRC),0)
 endif
 
 # Do section mismatch analysis for each module/built-in.o
-ifdef CONFIG_DEBUG_SECTION_MISMATCH
+# ifdef CONFIG_DEBUG_SECTION_MISMATCH
   cmd_secanalysis = ; scripts/mod/modpost $@
-endif
+# endif
 
 # Compile C sources (.c)
 # ---------------------------------------------------------------------------
