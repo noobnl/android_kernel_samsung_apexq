@@ -3794,9 +3794,8 @@ static void mxt224_register_callback(void *function)
 	pr_debug("[TSP]mxt224_register_callback\n");
 }
 
-static void mxt224_read_ta_status(void *ta_status)
+static void mxt224_read_ta_status(bool *ta_status)
 {
-#if 0
 #if defined(CONFIG_USB_SWITCH_FSA9485)
 	if (set_cable_status == CABLE_TYPE_AC
 		|| set_cable_status == CABLE_TYPE_USB
@@ -3804,8 +3803,8 @@ static void mxt224_read_ta_status(void *ta_status)
 		*ta_status = set_cable_status;
 #endif
 	pr_debug("[TSP]mxt224_ta_status = %d\n", set_cable_status);
-#endif
 }
+
 
 #define MXT224_MAX_MT_FINGERS		10
 
@@ -4332,7 +4331,7 @@ static struct gpio_keys_button gpio_keys_button[] = {
 	{
 		.code			= KEY_HOMEPAGE,
 		.type			= EV_KEY,
-//		.gpio			= -1,
+		.gpio			= -1,
 		.active_low		= 1,
 		.wakeup			= 0,
 		.debounce_interval	= 5, /* ms */
@@ -5017,14 +5016,13 @@ static struct i2c_registry msm8960_i2c_devices[] __initdata = {
 		ARRAY_SIZE(pn544_info),
 	},
 #endif /* CONFIG_NFC_PN544	*/
-#if 0
+
 	{
 		I2C_LIQUID,
 		MSM_8960_GSBI3_QUP_I2C_BUS_ID,
 		mxt_device_info,
 		ARRAY_SIZE(mxt_device_info),
 	},
-#endif
 #if defined(CONFIG_SENSORS_AK8975) || defined(CONFIG_INPUT_BMP180) || \
 	defined(CONFIG_MPU_SENSORS_MPU6050B1) || \
 	defined(CONFIG_MPU_SENSORS_MPU6050B1_411)
@@ -5244,59 +5242,6 @@ static int secjack_gpio_init(void)
 }
 #endif
 
-void main_mic_bias_init(void)
-{
-	int ret;
-	ret = gpio_request(GPIO_MAIN_MIC_BIAS, "LDO_BIAS");
-	if (ret) {
-		pr_err("%s: ldo bias gpio %d request"
-				"failed\n", __func__, GPIO_MAIN_MIC_BIAS);
-		return;
-	}
-	gpio_direction_output(GPIO_MAIN_MIC_BIAS, 0);
-}
-
-static int configure_codec_lineout_gpio(void)
-{
-	int ret;
-	struct pm_gpio param = {
-		.direction      = PM_GPIO_DIR_OUT,
-		.output_buffer  = PM_GPIO_OUT_BUF_CMOS,
-		.output_value   = 1,
-		.pull	   = PM_GPIO_PULL_NO,
-		.vin_sel	= PM_GPIO_VIN_S4,
-		.out_strength   = PM_GPIO_STRENGTH_MED,
-		.function       = PM_GPIO_FUNC_NORMAL,
-	};
-
-	ret = pm8xxx_gpio_config(PM8921_GPIO_PM_TO_SYS(
-				gpio_rev(LINEOUT_EN)), &param);
-	if (ret) {
-		pr_err("%s: Failed to configure Lineout EN"
-			" gpio %d\n", __func__,
-			PM8921_GPIO_PM_TO_SYS(gpio_rev(LINEOUT_EN)));
-		return ret;
-	} else
-		gpio_direction_output(PM8921_GPIO_PM_TO_SYS(
-					gpio_rev(LINEOUT_EN)), 1);
-	return 0;
-}
-
-static int tabla_codec_ldo_en_init(void)
-{
-	int ret;
-
-	ret = gpio_request(PM8921_GPIO_PM_TO_SYS(gpio_rev(LINEOUT_EN)),
-				 "LINEOUT_EN");
-	if (ret) {
-		pr_err("%s:External LDO  gpio %d request"
-			"failed\n", __func__,
-			 PM8921_GPIO_PM_TO_SYS(gpio_rev(LINEOUT_EN)));
-		return ret;
-	}
-	gpio_direction_output(PM8921_GPIO_PM_TO_SYS(gpio_rev(LINEOUT_EN)), 0);
-	return 0;
-}
 
 static void __init msm8960ab_update_krait_spm(void)
 {
