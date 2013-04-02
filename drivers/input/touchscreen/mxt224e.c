@@ -2334,7 +2334,7 @@ static ssize_t set_threshold_mode_show(struct device *dev,
 	return snprintf(buf, 10, "%u\n", threshold);
 }
 
-static ssize_t set_mxt_firm_update_store(struct device *dev,
+static ssize_t __devinit set_mxt_firm_update_store(struct device *dev,
 	struct device_attribute *attr, const char *buf, size_t size)
 {
 	struct mxt224_data *data = dev_get_drvdata(dev);
