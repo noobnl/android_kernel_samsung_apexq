@@ -2996,7 +2996,9 @@ static int __devinit mxt224_probe(struct i2c_client *client,
 err_irq:
 	kfree(data->objects);
 err_init_drv:
+#if TOUCH_BOOSTER
 	mutex_destroy(&data->dvfs_lock);
+#endif
 	gpio_free(data->gpio_read_done);
 /* err_gpio_req:
 	data->power_off();
