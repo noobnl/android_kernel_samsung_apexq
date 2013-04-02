@@ -32,10 +32,6 @@
 #include <linux/mfd/wcd9310/core.h>
 #include <mach/msm8960-gpio.h>
 
-#ifndef GPIO_MAIN_MIC_BIAS
-#define GPIO_MAIN_MIC_BIAS -1
-#endif
-
 /* 8960 machine driver */
 
 #define PM8921_GPIO_BASE		NR_GPIO_IRQS
