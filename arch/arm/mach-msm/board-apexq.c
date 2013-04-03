@@ -170,10 +170,6 @@
 #include <asm/kexec.h>
 #endif
 
-#ifdef CONFIG_ANDROID_RAM_CONSOLE
-#include <linux/persistent_ram.h>
-#endif
-
 extern unsigned int system_rev;
 #ifdef CONFIG_TOUCHSCREEN_MMS136
 struct tsp_callbacks *charger_callbacks;
@@ -345,7 +341,7 @@ static struct msm_gpiomux_config msm8960_sec_ts_configs[] = {
 #define MSM_HDMI_PRIM_ION_SF_SIZE MSM_HDMI_PRIM_PMEM_SIZE
 
 #define MSM_MM_FW_SIZE      (0x200000 - HOLE_SIZE) /* 2mb -128kb*/
-#define MSM8960_FIXED_AREA_START (0xb0000000 - (MSM_ION_MM_FW_SIZE + \
+#define MSM8960_FIXED_AREA_START (0xa0000000 - (MSM_ION_MM_FW_SIZE + \
                             HOLE_SIZE))
 #define MAX_FIXED_AREA_SIZE 0x10000000
 #define MSM8960_FW_START    MSM8960_FIXED_AREA_START
@@ -829,7 +825,7 @@ static void __init reserve_ion_memory(void)
 					heap->priv,
 					heap->size,
 					0,
-					0xb0000000);
+					0xa0000000);
 			}
 		}
 	}
@@ -909,7 +905,7 @@ static void __init reserve_ion_memory(void)
 						&ion_mm_heap_device.dev,
 						heap->size,
 						fixed_middle_start,
-						0xb0000000);
+						0xa0000000);
 					WARN_ON(ret);
 				}
 				pdata->secure_base = fixed_middle_start
@@ -1031,33 +1027,12 @@ static int __init ext_display_setup(char *param)
 }
 early_param("ext_display", ext_display_setup);
 
-/* Exclude the last 4 kB to preserve the kexec hardboot page. */
-#ifdef CONFIG_ANDROID_RAM_CONSOLE
-#define RAM_CONSOLE_START 0x9fde0000
-#define RAM_CONSOLE_SIZE  0x20000
-
-static struct platform_device ram_console_device = {
-	.name          = "ram_console",
-	.id            = -1,
-};
-
-struct persistent_ram_descriptor ram_console_desc = {
-	.name = "ram_console",
-	.size = RAM_CONSOLE_SIZE,
-};
-
-struct persistent_ram ram_console_ram = {
-	.start = RAM_CONSOLE_START,
-	.size = RAM_CONSOLE_SIZE,
-	.num_descs = 1,
-	.descs = &ram_console_desc,
-};
-#endif
-
 static void __init msm8960_reserve(void)
 {
 	msm8960_set_display_params(prim_panel_name, ext_panel_name);
 	msm_reserve();
+
+	add_persistent_ram();
 
 #ifdef CONFIG_KEXEC_HARDBOOT
 	memblock_remove(KEXEC_HB_PAGE_ADDR, SZ_4K);
@@ -1067,10 +1042,6 @@ static void __init msm8960_reserve(void)
 static void __init msm8960_allocate_memory_regions(void)
 {
 	msm8960_allocate_fb_region();
-#ifdef CONFIG_ANDROID_RAM_CONSOLE
-	persistent_ram_early_init(&ram_console_ram);
-#endif
-
 }
 #ifdef CONFIG_KEYBOARD_CYPRESS_TOUCH_236
 static void cypress_power_onoff(int onoff)
@@ -3158,10 +3129,11 @@ static void __init msm8960_init_buses(void)
 static struct msm_spi_platform_data msm8960_qup_spi_gsbi11_pdata = {
 	.max_clock_speed = 48000000, /*15060000,*/
 };
-#endif
+#else
 static struct msm_spi_platform_data msm8960_qup_spi_gsbi1_pdata = {
 	.max_clock_speed = 15060000,
 };
+#endif
 
 #ifdef CONFIG_USB_MSM_OTG_72K
 static struct msm_otg_platform_data msm_otg_pdata;
@@ -5282,9 +5254,6 @@ static void __init msm8960_tsens_init(void)
 
 static void __init samsung_apexq_init(void)
 {
-#ifdef CONFIG_ANDROID_RAM_CONSOLE
-	platform_device_register(&ram_console_device);
-#endif
 #ifdef CONFIG_SEC_DEBUG
 	sec_debug_init();
 #endif
@@ -5335,6 +5304,7 @@ static void __init samsung_apexq_init(void)
 	if (system_rev < BOARD_REV01)
 		qwerty_keyboard_init();
 #endif
+	add_ramconsole_devices();
 	msm8960_i2c_init();
 	msm8960_gfx_init();
 	if (cpu_is_msm8960ab())
@@ -5362,7 +5332,7 @@ static void __init samsung_apexq_init(void)
 	msm8960_init_battery();
 #endif
 	msm8960_init_hsic();
-	msm8960_init_cam();
+//	msm8960_init_cam();
 	msm8960_init_mmc();
 	if (machine_is_msm8960_liquid())
 		mxt_init_hw_liquid();
