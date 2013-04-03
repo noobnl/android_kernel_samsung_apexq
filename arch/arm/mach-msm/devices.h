@@ -73,9 +73,9 @@ extern struct platform_device msm8960_device_qup_i2c_gsbi8;
 extern struct platform_device msm8960_device_qup_i2c_gsbi9;
 extern struct platform_device msm8960_device_qup_i2c_gsbi10;
 extern struct platform_device msm8960_device_qup_i2c_gsbi12;
-#ifndef CONFIG_S5C73M3 
-extern struct platform_device msm8960_device_qup_spi_gsbi1;
-#endif
+//#ifndef CONFIG_S5C73M3 
+//extern struct platform_device msm8960_device_qup_spi_gsbi1;
+//#endif
 #ifdef CONFIG_S5C73M3 
 extern struct platform_device msm8960_device_qup_spi_gsbi11;
 #endif

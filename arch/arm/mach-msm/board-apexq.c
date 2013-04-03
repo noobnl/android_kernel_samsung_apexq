@@ -3125,6 +3125,7 @@ static void __init msm8960_init_buses(void)
 #endif
 }
 
+#if 0
 #ifdef CONFIG_S5C73M3
 static struct msm_spi_platform_data msm8960_qup_spi_gsbi11_pdata = {
 	.max_clock_speed = 48000000, /*15060000,*/
@@ -3133,6 +3134,7 @@ static struct msm_spi_platform_data msm8960_qup_spi_gsbi11_pdata = {
 static struct msm_spi_platform_data msm8960_qup_spi_gsbi1_pdata = {
 	.max_clock_speed = 15060000,
 };
+#endif
 #endif
 
 #ifdef CONFIG_USB_MSM_OTG_72K
@@ -4121,12 +4123,13 @@ static struct msm_i2c_platform_data msm8960_i2c_qup_gsbi4_pdata = {
 	.clk_freq = 100000,
 	.src_clk_rate = 24000000,
 };
-
+#if 0
 #ifndef CONFIG_SLIMBUS_MSM_CTRL
 static struct msm_i2c_platform_data msm8960_i2c_qup_gsbi1_pdata = {
 	.clk_freq = 100000,
 	.src_clk_rate = 24000000,
 };
+#endif
 #endif
 
 static struct msm_i2c_platform_data msm8960_i2c_qup_gsbi3_pdata = {
@@ -4508,8 +4511,10 @@ static struct platform_device *common_devices[] __initdata = {
 	&msm8960_device_ext_5v_vreg,
 	&msm8960_device_ssbi_pmic,
 	&msm8960_device_ext_otg_sw_vreg,
+#if 0
 #ifndef CONFIG_SLIMBUS_MSM_CTRL
 	&msm8960_device_qup_i2c_gsbi1,
+#endif
 #endif
 	&msm8960_device_qup_i2c_gsbi3,
 	&msm8960_device_qup_i2c_gsbi4,
@@ -4677,9 +4682,11 @@ static void __init msm8960_i2c_init(void)
 	msm8960_device_qup_i2c_gsbi4.dev.platform_data =
 					&msm8960_i2c_qup_gsbi4_pdata;
 
+#if 0
 #ifndef CONFIG_SLIMBUS_MSM_CTRL
 	msm8960_device_qup_i2c_gsbi1.dev.platform_data =
 					&msm8960_i2c_qup_gsbi1_pdata;
+#endif
 #endif
 
 	msm8960_device_qup_i2c_gsbi7.dev.platform_data =
@@ -5033,6 +5040,7 @@ static struct i2c_registry msm8960_i2c_devices[] __initdata = {
 		msm_isa1200_board_info,
 		ARRAY_SIZE(msm_isa1200_board_info),
 	},
+#if 0
 #ifndef CONFIG_SLIMBUS_MSM_CTRL
 	{
 		I2C_SURF | I2C_FFA | I2C_FLUID,
@@ -5040,6 +5048,7 @@ static struct i2c_registry msm8960_i2c_devices[] __initdata = {
 		tabla_device_info,
 		ARRAY_SIZE(tabla_device_info),
 	},
+#endif
 #endif
 
 #if defined(CONFIG_KEYBOARD_ADP5588) || defined(CONFIG_KEYBOARD_ADP5588_MODULE)
