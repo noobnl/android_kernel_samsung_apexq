@@ -322,7 +322,7 @@ static int write_mem(struct mxt224_data *data, u16 reg, u8 len, const u8 *buf)
 	return ret == sizeof(tmp) ? 0 : -EIO;
 }
 
-static int __devinit mxt224_reset(struct mxt224_data *data)
+static int mxt224_reset(struct mxt224_data *data)
 {
 	u8 buf = 1u;
 #if TOUCH_BOOSTER
@@ -333,7 +333,7 @@ static int __devinit mxt224_reset(struct mxt224_data *data)
 	return write_mem(data, data->cmd_proc + CMD_RESET_OFFSET, 1, &buf);
 }
 
-static int __devinit mxt224_backup(struct mxt224_data *data)
+static int mxt224_backup(struct mxt224_data *data)
 {
 	u8 buf = 0x55u;
 	return write_mem(data, data->cmd_proc + CMD_BACKUP_OFFSET, 1, &buf);
@@ -381,7 +381,7 @@ static int write_config(struct mxt224_data *data, u8 type, const u8 *cfg)
 }
 
 
-static u32 __devinit crc24(u32 crc, u8 byte1, u8 byte2)
+static u32 crc24(u32 crc, u8 byte1, u8 byte2)
 {
 	static const u32 crcpoly = 0x80001B;
 	u32 res;
@@ -396,7 +396,7 @@ static u32 __devinit crc24(u32 crc, u8 byte1, u8 byte2)
 	return res;
 }
 
-static int __devinit calculate_infoblock_crc(struct mxt224_data *data,
+static int calculate_infoblock_crc(struct mxt224_data *data,
 							u32 *crc_pointer)
 {
 	u32 crc = 0;
@@ -863,7 +863,7 @@ static void equalize_coordinate(bool detect, u8 id, u16 *px, u16 *py)
 }
 #endif  /* DRIVER_FILTER */
 
-static int __devinit mxt224_init_touch_driver(struct mxt224_data *data)
+static int mxt224_init_touch_driver(struct mxt224_data *data)
 {
 	struct object_t *object_table;
 	u32 read_crc = 0;
@@ -2334,7 +2334,7 @@ static ssize_t set_threshold_mode_show(struct device *dev,
 	return snprintf(buf, 10, "%u\n", threshold);
 }
 
-static ssize_t __devinit set_mxt_firm_update_store(struct device *dev,
+static ssize_t set_mxt_firm_update_store(struct device *dev,
 	struct device_attribute *attr, const char *buf, size_t size)
 {
 	struct mxt224_data *data = dev_get_drvdata(dev);
@@ -2645,7 +2645,7 @@ static const struct attribute_group mxt224_attr_group = {
 	.attrs = mxt224_attrs,
 };
 
-static int __devinit mxt224_probe(struct i2c_client *client,
+static int mxt224_probe(struct i2c_client *client,
 						const struct i2c_device_id *id)
 {
 	struct mxt224_platform_data *pdata = client->dev.platform_data;
