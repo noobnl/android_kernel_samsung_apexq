@@ -117,6 +117,12 @@
 #ifdef CONFIG_PM8921_SEC_CHARGER
 #include <linux/mfd/pm8xxx/pm8921-sec-charger.h>
 #endif
+#ifdef CONFIG_BATTERY_SEC
+#include <linux/sec_battery.h>
+#endif
+#ifdef CONFIG_CHARGER_SMB347
+#include <linux/smb347_charger.h>
+#endif
 #ifdef CONFIG_BATTERY_MAX17040
 #include <linux/max17040_battery.h>
 #endif
@@ -158,6 +164,13 @@
 #include "mach/board-msm8960-camera.h"
 #include "pm-boot.h"
 #include "msm_watchdog.h"
+#ifdef CONFIG_SENSORS_CM36651
+#include <linux/i2c/cm36651.h>
+#endif
+#ifdef CONFIG_REGULATOR_MAX8952
+#include <linux/regulator/max8952.h>
+#include <linux/regulator/machine.h>
+#endif
 #ifdef CONFIG_VIBETONZ
 #include <linux/vibrator.h>
 #endif
@@ -171,7 +184,7 @@
 #endif
 
 extern unsigned int system_rev;
-#ifdef CONFIG_TOUCHSCREEN_MMS136
+#ifdef CONFIG_TOUCHSCREEN_MMS144
 struct tsp_callbacks *charger_callbacks;
 #endif
 
@@ -280,7 +293,6 @@ struct sx150x_platform_data msm8960_sx150x_data[] = {
 
 #endif
 
-#if 0
 static struct gpiomux_setting sec_ts_ldo_act_cfg = {
 	.func = GPIOMUX_FUNC_GPIO,
 	.drv = GPIOMUX_DRV_8MA,
@@ -302,7 +314,6 @@ static struct msm_gpiomux_config msm8960_sec_ts_configs[] = {
 		},
 	},
 };
-#endif
 
 #define MSM_PMEM_ADSP_SIZE         0x4E00000 /* 78 Mbytes */
 #define MSM_PMEM_AUDIO_SIZE        0x160000 /* 1.375 Mbytes */
@@ -1336,7 +1347,7 @@ static void fsa9485_charger_cb(bool attached)
 	if (charging_cbs.tsp_set_charging_cable)
 		charging_cbs.tsp_set_charging_cable(attached);
 #endif
-#ifdef CONFIG_TOUCHSCREEN_MMS136
+#ifdef CONFIG_TOUCHSCREEN_MMS144
 	if (charger_callbacks && charger_callbacks->inform_charger)
 		charger_callbacks->inform_charger(charger_callbacks, attached);
 #endif
@@ -1533,6 +1544,22 @@ static int fsa9485_dock_init(void)
 
 int msm8960_get_cable_type(void)
 {
+#ifdef CONFIG_WIRELESS_CHARGING
+	union power_supply_propval value;
+	int i, ret = 0;
+	struct power_supply *psy;
+
+	for (i = 0; i < 10; i++) {
+		psy = power_supply_get_by_name("battery");
+		if (psy)
+			break;
+	}
+	if (i == 10) {
+		pr_err("%s: fail to get battery ps\n", __func__);
+		return -1;
+	}
+#endif
+
 	pr_info("cable type (%d) -----\n", set_cable_status);
 
 	if (set_cable_status != CABLE_TYPE_NONE) {
@@ -1550,6 +1577,13 @@ int msm8960_get_cable_type(void)
 		case CABLE_TYPE_AC:
 			fsa9485_charger_cb(1);
 			break;
+#ifdef CONFIG_WIRELESS_CHARGING
+		case CABLE_TYPE_WPC:
+			value.intval = POWER_SUPPLY_TYPE_WPC;
+			ret = psy->set_property(psy, POWER_SUPPLY_PROP_ONLINE,
+				&value);
+			break;
+#endif
 		default:
 			pr_err("invalid status:%d\n", set_cable_status);
 			break;
@@ -2165,16 +2199,32 @@ static struct i2c_board_info sns_i2c_borad_info[] = {
 	defined(CONFIG_MPU_SENSORS_MPU6050B1_411)
 static void mpl_init(void)
 {
-	int rc;
-	rc = gpio_request(GPIO_MPU3050_INT, "MPUIRQ");
-	if (rc < 0)
-		pr_err("GPIO_MPU3050_INT gpio_request was failed\n");
-	gpio_direction_input(GPIO_MPU3050_INT);
+	int ret = 0;
+	ret = gpio_request(GPIO_MPU3050_INT, "MPUIRQ");
+	if (ret)
+		pr_err("%s gpio request %d err\n", __func__, GPIO_MPU3050_INT);
+	else
+		gpio_direction_input(GPIO_MPU3050_INT);
+
 #if defined(CONFIG_MPU_SENSORS_MPU6050B1)
 	if (system_rev == BOARD_REV01)
 		mpu_data = mpu_data_01;
 	else if (system_rev < BOARD_REV01)
 		mpu_data = mpu_data_00;
+	mpu_data.reset = gpio_rev(GPIO_MAG_RST);
+#elif defined(CONFIG_MPU_SENSORS_MPU6050B1_411)
+	if (system_rev == BOARD_REV01) {
+		mpu6050_data = mpu6050_data_01;
+		inv_mpu_ak8963_data = inv_mpu_ak8963_data_01;
+	} else if (system_rev < BOARD_REV01) {
+		mpu6050_data = mpu6050_data_00;
+		inv_mpu_ak8963_data = inv_mpu_ak8963_data_00;
+	}
+	if (system_rev < BOARD_REV08 || system_rev == BOARD_REV11)
+		mpu6050_data.reset = gpio_rev(GPIO_MAG_RST);
+	else
+		mpu6050_data.reset =
+			PM8921_GPIO_PM_TO_SYS(gpio_rev(GPIO_MAG_RST));
 #endif
 }
 #endif
@@ -2205,7 +2255,7 @@ static void pn544_conf_gpio(void)
 		GPIO_CFG_NO_PULL, GPIO_CFG_2MA), 1);
 	gpio_tlmm_config(GPIO_CFG(GPIO_NFC_SCL, 0, GPIO_CFG_INPUT,
 		GPIO_CFG_NO_PULL, GPIO_CFG_2MA), 1);
-//	return 0;
+	return;
 }
 
 static int __init pn544_init(void)
@@ -3125,7 +3175,6 @@ static void __init msm8960_init_buses(void)
 #endif
 }
 
-#if 0
 #ifdef CONFIG_S5C73M3
 static struct msm_spi_platform_data msm8960_qup_spi_gsbi11_pdata = {
 	.max_clock_speed = 48000000, /*15060000,*/
@@ -3134,7 +3183,6 @@ static struct msm_spi_platform_data msm8960_qup_spi_gsbi11_pdata = {
 static struct msm_spi_platform_data msm8960_qup_spi_gsbi1_pdata = {
 	.max_clock_speed = 15060000,
 };
-#endif
 #endif
 
 #ifdef CONFIG_USB_MSM_OTG_72K
@@ -3158,14 +3206,14 @@ static int msm_hsusb_vbus_power(bool on)
 	pr_info("%s, attached %d, vbus_is_on %d\n", __func__, on, vbus_is_on);
 
 	if (vbus_is_on == on)
-		return 0;
+		return;
 
 	if (on) {
 		mvs_otg_switch = regulator_get(&msm8960_device_otg.dev,
 					       "vbus_otg");
 		if (IS_ERR(mvs_otg_switch)) {
 			pr_err("Unable to get mvs_otg_switch\n");
-			return 0;
+			return;
 		}
 
 		rc = gpio_request(PM8921_GPIO_PM_TO_SYS(PMIC_GPIO_OTG_EN),
@@ -3187,23 +3235,68 @@ static int msm_hsusb_vbus_power(bool on)
 			goto disable_mvs_otg;
 		}
 		vbus_is_on = true;
-		return 0;
+		return;
 	} else {
 		gpio_set_value_cansleep(PM8921_GPIO_PM_TO_SYS(PMIC_GPIO_OTG_EN),
-				0);
+					0);
 #ifdef CONFIG_USB_SWITCH_FSA9485
 		fsa9485_otg_detach();
 #endif
 	}
 
 disable_mvs_otg:
-		regulator_disable(mvs_otg_switch);
+	regulator_disable(mvs_otg_switch);
 free_usb_5v_en:
-		gpio_free(PM8921_GPIO_PM_TO_SYS(PMIC_GPIO_OTG_EN));
+	gpio_free(PM8921_GPIO_PM_TO_SYS(PMIC_GPIO_OTG_EN));
 put_mvs_otg:
-		regulator_put(mvs_otg_switch);
-		vbus_is_on = false;
-                return 0;
+	regulator_put(mvs_otg_switch);
+	vbus_is_on = false;
+}
+
+#ifdef CONFIG_CHARGER_SMB347
+static void msm_hsusb_vbus_power_smb347s(bool on)
+{
+	struct power_supply *psy = power_supply_get_by_name("battery");
+	union power_supply_propval value;
+	int ret = 0;
+
+	pr_info("%s, attached %d, vbus_is_on %d\n", __func__, on, vbus_is_on);
+
+	/* If VBUS is already on (or off), do nothing. */
+	if (vbus_is_on == on)
+		return;
+
+	if (on)
+		value.intval = POWER_SUPPLY_CAPACITY_OTG_ENABLE;
+	else
+		value.intval = POWER_SUPPLY_CAPACITY_OTG_DISABLE;
+
+	if (psy) {
+		ret = psy->set_property(psy, POWER_SUPPLY_PROP_OTG, &value);
+		if (ret) {
+			pr_err("%s: fail to set power_suppy otg property(%d)\n",
+				__func__, ret);
+		}
+#ifdef CONFIG_USB_SWITCH_FSA9485
+		if (!on)
+			fsa9485_otg_detach();
+#endif
+		vbus_is_on = on;
+	} else {
+		pr_err("%s : psy is null!\n", __func__);
+	}
+}
+#endif
+
+static int msm_hsusb_vbus_power(bool on)
+{
+	if (system_rev < BOARD_REV04)
+		msm_hsusb_vbus_power_max8627(on);
+#ifdef CONFIG_CHARGER_SMB347
+	else
+		msm_hsusb_vbus_power_smb347s(on);
+#endif
+	return 0;
 }
 
 static int phy_settings[] = {
@@ -3286,6 +3379,12 @@ static struct msm_otg_platform_data msm_otg_pdata = {
 #ifdef CONFIG_USB_HOST_NOTIFY
 static void __init msm_otg_power_init(void)
 {
+	if (system_rev >= BOARD_REV01) {
+		msm_otg_pdata.otg_power_gpio =
+			PM8921_GPIO_PM_TO_SYS(PMIC_GPIO_OTG_POWER);
+		msm_otg_pdata.otg_power_irq =
+			PM8921_GPIO_IRQ(PM8921_IRQ_BASE, PMIC_GPIO_OTG_POWER);
+	}
 	if (system_rev >= BOARD_REV01)
 		msm_otg_pdata.smb347s = true;
 	else
@@ -4037,7 +4136,7 @@ static void mxt_init_hw_liquid(void)
 				__func__, GPIO_MXT_TS_LDO_EN);
 		goto err_ldo_gpio_req;
 	}
-
+#if !defined(CONFIG_WIRELESS_CHARGING)
 	rc = gpio_request(GPIO_MXT_TS_RESET, "mxt_reset_gpio");
 	if (rc) {
 		pr_err("%s: unable to request mxt_reset gpio [%d]\n",
@@ -4051,7 +4150,7 @@ static void mxt_init_hw_liquid(void)
 				__func__, GPIO_MXT_TS_RESET);
 		goto err_reset_gpio_req;
 	}
-
+#endif
 	return;
 
 err_reset_gpio_req:
@@ -4123,13 +4222,12 @@ static struct msm_i2c_platform_data msm8960_i2c_qup_gsbi4_pdata = {
 	.clk_freq = 100000,
 	.src_clk_rate = 24000000,
 };
-#if 0
+
 #ifndef CONFIG_SLIMBUS_MSM_CTRL
 static struct msm_i2c_platform_data msm8960_i2c_qup_gsbi1_pdata = {
 	.clk_freq = 100000,
 	.src_clk_rate = 24000000,
 };
-#endif
 #endif
 
 static struct msm_i2c_platform_data msm8960_i2c_qup_gsbi3_pdata = {
@@ -4257,7 +4355,7 @@ static struct platform_device msm8960_device_ext_5v_vreg __devinitdata = {
 		.platform_data = &msm_gpio_regulator_pdata[GPIO_VREG_ID_EXT_5V],
 	},
 };
-
+#if 0
 static struct platform_device msm8960_device_ext_l2_vreg __devinitdata = {
 	.name	= GPIO_REGULATOR_DEV_NAME,
 	.id	= 91,
@@ -4265,7 +4363,7 @@ static struct platform_device msm8960_device_ext_l2_vreg __devinitdata = {
 		.platform_data = &msm_gpio_regulator_pdata[GPIO_VREG_ID_EXT_L2],
 	},
 };
-
+#endif
 static struct platform_device msm8960_device_ext_3p3v_vreg __devinitdata = {
 	.name	= GPIO_REGULATOR_DEV_NAME,
 	.id	= PM8921_GPIO_PM_TO_SYS(17),
@@ -4511,10 +4609,8 @@ static struct platform_device *common_devices[] __initdata = {
 	&msm8960_device_ext_5v_vreg,
 	&msm8960_device_ssbi_pmic,
 	&msm8960_device_ext_otg_sw_vreg,
-#if 0
 #ifndef CONFIG_SLIMBUS_MSM_CTRL
 	&msm8960_device_qup_i2c_gsbi1,
-#endif
 #endif
 	&msm8960_device_qup_i2c_gsbi3,
 	&msm8960_device_qup_i2c_gsbi4,
@@ -4682,11 +4778,9 @@ static void __init msm8960_i2c_init(void)
 	msm8960_device_qup_i2c_gsbi4.dev.platform_data =
 					&msm8960_i2c_qup_gsbi4_pdata;
 
-#if 0
 #ifndef CONFIG_SLIMBUS_MSM_CTRL
 	msm8960_device_qup_i2c_gsbi1.dev.platform_data =
 					&msm8960_i2c_qup_gsbi1_pdata;
-#endif
 #endif
 
 	msm8960_device_qup_i2c_gsbi7.dev.platform_data =
@@ -5040,7 +5134,6 @@ static struct i2c_registry msm8960_i2c_devices[] __initdata = {
 		msm_isa1200_board_info,
 		ARRAY_SIZE(msm_isa1200_board_info),
 	},
-#if 0
 #ifndef CONFIG_SLIMBUS_MSM_CTRL
 	{
 		I2C_SURF | I2C_FFA | I2C_FLUID,
@@ -5048,7 +5141,6 @@ static struct i2c_registry msm8960_i2c_devices[] __initdata = {
 		tabla_device_info,
 		ARRAY_SIZE(tabla_device_info),
 	},
-#endif
 #endif
 
 #if defined(CONFIG_KEYBOARD_ADP5588) || defined(CONFIG_KEYBOARD_ADP5588_MODULE)
@@ -5341,7 +5433,7 @@ static void __init samsung_apexq_init(void)
 	msm8960_init_battery();
 #endif
 	msm8960_init_hsic();
-//	msm8960_init_cam();
+	msm8960_init_cam();
 	msm8960_init_mmc();
 	if (machine_is_msm8960_liquid())
 		mxt_init_hw_liquid();
