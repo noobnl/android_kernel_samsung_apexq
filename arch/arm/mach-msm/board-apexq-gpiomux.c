@@ -474,6 +474,36 @@ static struct msm_gpiomux_config msm8960_gsbi_configs[] __initdata = {
 			[GPIOMUX_SUSPENDED] = &gsbi7,
 		},
 	},
+#ifdef CONFIG_S5C73M3
+	{
+		.gpio	   = GPIO_CAM_SPI_MOSI,		/* GSBI11 QUP SPI_DATA_MOSI */
+		.settings = {
+			[GPIOMUX_SUSPENDED] = &spi_suspended_config,
+			[GPIOMUX_ACTIVE] = &spi_active,
+		},
+	},
+	{
+		.gpio	   = GPIO_CAM_SPI_MISO,		/* GSBI11 QUP SPI_DATA_MISO */
+		.settings = {
+			[GPIOMUX_SUSPENDED] = &spi_suspended_config,
+			[GPIOMUX_ACTIVE] = &spi_active,
+		},
+	},
+	{
+		.gpio	   = GPIO_CAM_SPI_SSN,		/* GSBI11 QUP SPI_CS_N */
+		.settings = {
+			[GPIOMUX_SUSPENDED] = &spi_suspended_config,
+			[GPIOMUX_ACTIVE] = &spi_active,
+		},
+	},
+	{
+		.gpio	   = GPIO_CAM_SPI_SCLK,		/* GSBI11 QUP SPI_CLK */
+		.settings = {
+			[GPIOMUX_SUSPENDED] = &spi_suspended_config,
+			[GPIOMUX_ACTIVE] = &spi_active,
+		},
+	},
+#endif
 	{
 		.gpio      = 44,	/* GSBI12 I2C QUP SDA */
 		.settings = {
