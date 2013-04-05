@@ -2353,8 +2353,8 @@ CONFIG_MSM_CAMERA_V4L2=y
 # Camera Sensor Selection
 #
 # CONFIG_ISX012 is not set
-CONFIG_S5C73M3 is not set
-CONFIG_S5K6A3YX is not set
+# CONFIG_S5C73M3 is not set
+CONFIG_S5K6A3YX=y
 # CONFIG_S5K8AAY is not set
 # CONFIG_DB8131M=y
 # CONFIG_MT9M114 is not set
