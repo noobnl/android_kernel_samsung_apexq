@@ -2199,32 +2199,17 @@ static struct i2c_board_info sns_i2c_borad_info[] = {
 	defined(CONFIG_MPU_SENSORS_MPU6050B1_411)
 static void mpl_init(void)
 {
-	int ret = 0;
-	ret = gpio_request(GPIO_MPU3050_INT, "MPUIRQ");
-	if (ret)
-		pr_err("%s gpio request %d err\n", __func__, GPIO_MPU3050_INT);
-	else
-		gpio_direction_input(GPIO_MPU3050_INT);
+	int rc;
+	rc = gpio_request(GPIO_MPU3050_INT, "MPUIRQ");
+	if (rc < 0)
+		pr_err("GPIO_MPU3050_INT gpio_request was failed\n");
+	gpio_direction_input(GPIO_MPU3050_INT);
 
 #if defined(CONFIG_MPU_SENSORS_MPU6050B1)
 	if (system_rev == BOARD_REV01)
 		mpu_data = mpu_data_01;
 	else if (system_rev < BOARD_REV01)
 		mpu_data = mpu_data_00;
-	mpu_data.reset = gpio_rev(GPIO_MAG_RST);
-#elif defined(CONFIG_MPU_SENSORS_MPU6050B1_411)
-	if (system_rev == BOARD_REV01) {
-		mpu6050_data = mpu6050_data_01;
-		inv_mpu_ak8963_data = inv_mpu_ak8963_data_01;
-	} else if (system_rev < BOARD_REV01) {
-		mpu6050_data = mpu6050_data_00;
-		inv_mpu_ak8963_data = inv_mpu_ak8963_data_00;
-	}
-	if (system_rev < BOARD_REV08 || system_rev == BOARD_REV11)
-		mpu6050_data.reset = gpio_rev(GPIO_MAG_RST);
-	else
-		mpu6050_data.reset =
-			PM8921_GPIO_PM_TO_SYS(gpio_rev(GPIO_MAG_RST));
 #endif
 }
 #endif
@@ -3287,17 +3272,6 @@ static void msm_hsusb_vbus_power_smb347s(bool on)
 	}
 }
 #endif
-
-static int msm_hsusb_vbus_power(bool on)
-{
-	if (system_rev < BOARD_REV04)
-		msm_hsusb_vbus_power_max8627(on);
-#ifdef CONFIG_CHARGER_SMB347
-	else
-		msm_hsusb_vbus_power_smb347s(on);
-#endif
-	return 0;
-}
 
 static int phy_settings[] = {
 	0x44, 0x80,
@@ -5400,9 +5374,6 @@ static void __init samsung_apexq_init(void)
 	msm_device_hsic_host.dev.platform_data = &msm_hsic_pdata;
 	msm8960_init_gpiomux();
 	spi_register_board_info(spi_board_info, ARRAY_SIZE(spi_board_info));
-#ifdef CONFIG_BATTERY_SEC
-	check_highblock_temp();
-#endif /*CONFIG_BATTERY_SEC*/
 	msm8960_init_pmic();
 #if defined(CONFIG_KEYBOARD_PMIC8XXX)
 	if (system_rev < BOARD_REV01)
