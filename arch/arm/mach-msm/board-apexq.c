@@ -5400,6 +5400,9 @@ static void __init samsung_apexq_init(void)
 	msm_device_hsic_host.dev.platform_data = &msm_hsic_pdata;
 	msm8960_init_gpiomux();
 	spi_register_board_info(spi_board_info, ARRAY_SIZE(spi_board_info));
+#ifdef CONFIG_BATTERY_SEC
+	check_highblock_temp();
+#endif /*CONFIG_BATTERY_SEC*/
 	msm8960_init_pmic();
 #if defined(CONFIG_KEYBOARD_PMIC8XXX)
 	if (system_rev < BOARD_REV01)
