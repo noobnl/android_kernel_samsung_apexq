@@ -46,12 +46,14 @@ static struct clk *camio_cam_clk;
 static struct clk *camio_jpeg_clk;
 static struct clk *camio_jpeg_pclk;
 static struct regulator *fs_ijpeg;
+#if 0
 #ifndef CONFIG_S5C73M3
 static struct regulator *cam_vana;
 static struct regulator *cam_vio;
 static struct regulator *cam_vdig;
 static struct regulator *cam_vaf;
 static struct regulator *mipi_csi_vdd;
+#endif
 #endif
 static struct msm_camera_io_clk camio_clk;
 static struct platform_device *camio_dev;
@@ -171,7 +173,8 @@ void msm_io_memcpy(void __iomem *dest_addr, void __iomem *src_addr, u32 len)
 	msm_io_memcpy_toio(dest_addr, src_addr, len / 4);
 	msm_io_dump(dest_addr, len);
 }
-#ifndef CONFIG_S5C73M3
+
+#if 0
 static int msm_camera_vreg_enable(struct platform_device *pdev)
 {
 	if (mipi_csi_vdd == NULL) {
@@ -199,7 +202,7 @@ static int msm_camera_vreg_enable(struct platform_device *pdev)
 			goto mipi_csi_vdd_disable;
 		}
 	}
-#ifndef CONFIG_S5C73M3
+#if 0
 	CDBG("%s : XXX\n", __func__);
 
 	if (cam_vana == NULL) {
@@ -321,8 +324,7 @@ static int msm_camera_vreg_enable(struct platform_device *pdev)
 #endif
 	return 0;
 
-#ifndef CONFIG_S5C73M3
-cam_vaf_disable:
+#if 0
 	regulator_set_optimum_mode(cam_vaf, 0);
 cam_vaf_release:
 	regulator_set_voltage(cam_vaf, 0, CAM_VAF_MAXUV);
@@ -340,25 +342,25 @@ cam_vdig_put:
 #endif
 	regulator_put(cam_vdig);
 	cam_vdig = NULL;
-#ifndef CONFIG_S5C73M3
+#if 0
 cam_vio_disable:
 #endif
 	regulator_disable(cam_vio);
-#ifndef CONFIG_S5C73M3
+#if 0
 cam_vio_put:
 #endif
 	regulator_put(cam_vio);
 	cam_vio = NULL;
-#ifndef CONFIG_S5C73M3
+#if 0
 cam_vana_disable:
 #endif
 	regulator_set_optimum_mode(cam_vana, 0);
-#ifndef CONFIG_S5C73M3
+#if 0
 cam_vana_release:
 #endif
 	regulator_set_voltage(cam_vana, 0, CAM_VANA_MAXUV);
 	regulator_disable(cam_vana);
-#ifndef CONFIG_S5C73M3
+#if 0
 cam_vana_put:
 #endif
 	regulator_put(cam_vana);
@@ -375,7 +377,7 @@ mipi_csi_vdd_put:
 	return -ENODEV;
 }
 #endif
-#ifndef CONFIG_S5C73M3
+#if 0
 static void msm_camera_vreg_disable(void)
 {
 	if (mipi_csi_vdd) {
