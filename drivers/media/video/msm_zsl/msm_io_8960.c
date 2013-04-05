@@ -694,6 +694,7 @@ int msm_camio_sensor_clk_on(struct platform_device *pdev)
 #else
 	msm_camera_vreg_enable(pdev);
 #endif
+#if 0
 	if (sinfo->sensor_platform_info->privacy_light) {
 //		struct msm8960_privacy_light_cfg *privacy_light_config =
 //			sinfo->sensor_platform_info->privacy_light_info;
@@ -701,6 +702,7 @@ int msm_camio_sensor_clk_on(struct platform_device *pdev)
 		/*pm8xxx_mpp_config(privacy_light_config->mpp,
 						  &privacy_light_on_config);*/
 	}
+#endif
 	msleep(20);
 	return 0;
 }
@@ -721,6 +723,7 @@ int msm_camio_sensor_clk_off(struct platform_device *pdev)
 #else
 	msm_camera_vreg_disable();
 #endif
+#if 0
 	if (sinfo->sensor_platform_info->privacy_light) {
 //		struct msm8960_privacy_light_cfg *privacy_light_config =
 //			sinfo->sensor_platform_info->privacy_light_info;
@@ -728,6 +731,7 @@ int msm_camio_sensor_clk_off(struct platform_device *pdev)
 		/*pm8xxx_mpp_config(privacy_light_config->mpp,
 						  &privacy_light_off_config);*/
 	}
+#endif
 	rc = config_gpio_table(0);
 	if (rc < 0)
 		return rc;
