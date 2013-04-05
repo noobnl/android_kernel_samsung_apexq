@@ -205,14 +205,15 @@ struct msm_camera_csi_lane_params {
 	uint16_t csi_lane_mask;
 	uint8_t csi_phy_sel;
 };
-#if defined(CONFIG_S5C73M3) && defined(CONFIG_S5K6A3YX) /* D2 */
+//#if defined(CONFIG_S5C73M3) && defined(CONFIG_S5K6A3YX) /* D2 */
 struct msm_camera_gpio_conf {
         void *cam_gpiomux_conf_tbl;
         uint8_t cam_gpiomux_conf_tbl_size;
         uint16_t *cam_gpio_tbl;
         uint8_t cam_gpio_tbl_size;
 };
-#else
+//#else
+#if 0
 struct msm_camera_gpio_conf {
 	void *cam_gpiomux_conf_tbl;
 	uint8_t cam_gpiomux_conf_tbl_size;
@@ -243,7 +244,7 @@ struct msm_camera_sensor_platform_info {
 	struct msm_camera_gpio_conf *gpio_conf;
 	struct msm_camera_i2c_conf *i2c_conf;
 	struct msm_camera_csi_lane_params *csi_lane_params;
-#if defined(CONFIG_S5C73M3) && defined(CONFIG_S5K6A3YX) /* D2 */
+//#if defined(CONFIG_S5C73M3) && defined(CONFIG_S5K6A3YX) /* D2 */
 	int privacy_light;
 	void *privacy_light_info;
 	int vcm_pwd;
@@ -258,7 +259,7 @@ struct msm_camera_sensor_platform_info {
 	void(*sensor_get_fw) (u8 *isp_fw, u8 *phone_fw);
 	void(*sensor_set_isp_core) (int);
 	bool(*sensor_is_vdd_core_set) (void);
-#endif
+//#endif
 
 };
 
@@ -312,9 +313,9 @@ struct msm_camera_sensor_info {
 	struct msm_actuator_info *actuator_info;
 	int pmic_gpio_enable;
 	struct msm_eeprom_info *eeprom_info;
-#if defined(CONFIG_S5C73M3) && defined(CONFIG_S5K6A3YX) /* D2 */
+//#if defined(CONFIG_S5C73M3) && defined(CONFIG_S5K6A3YX) /* D2 */
         struct msm_camera_gpio_conf *gpio_conf;
-#endif
+//#endif
 
 };
 
