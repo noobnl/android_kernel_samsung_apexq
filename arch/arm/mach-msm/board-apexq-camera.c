@@ -170,15 +170,6 @@ static struct msm_gpiomux_config msm8960_cam_common_configs[] = {
 		},
 	},
 #endif
-#if defined(CONFIG_MACH_INFINITE)/* >=REV04 */
-	{
-		.gpio = GPIO_MSM_FLASH_CNTL_EN2,
-		.settings = {
-			[GPIOMUX_ACTIVE]    = &cam_settings[2],
-			[GPIOMUX_SUSPENDED] = &cam_settings[0],
-		},
-	},
-#endif
 	{
 		.gpio = GPIO_MSM_FLASH_NOW,
 		.settings = {
@@ -186,15 +177,6 @@ static struct msm_gpiomux_config msm8960_cam_common_configs[] = {
 			[GPIOMUX_SUSPENDED] = &cam_settings[0],
 		},
 	},
-#if defined(CONFIG_MACH_AEGIS2)/* >=REV07 */
-	{
-		.gpio = GPIO_MSM_FLASH_NOW2,
-		.settings = {
-			[GPIOMUX_ACTIVE]    = &cam_settings[2],
-			[GPIOMUX_SUSPENDED] = &cam_settings[0],
-		},
-	},
-#endif
 #if !(defined(CONFIG_MACH_AEGIS2) || defined(CONFIG_MACH_JASPER))
 	{
 		.gpio = GPIO_MAIN_CAM_STBY,
@@ -234,15 +216,6 @@ static struct msm_gpiomux_config msm8960_cam_common_configs[] = {
 			[GPIOMUX_SUSPENDED] = &cam_settings[0],
 		},
 	},
-#if defined(CONFIG_MACH_STRETTO) || defined(CONFIG_MACH_INFINITE)
-	{
-		.gpio = GPIO_CAM_MCLK2,
-		.settings = {
-			[GPIOMUX_ACTIVE]	= &cam_settings[10],
-			[GPIOMUX_SUSPENDED] = &cam_settings[0],
-		},
-	},
-#endif
 #endif
 };
 
