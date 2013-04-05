@@ -2422,6 +2422,7 @@ static struct msm_camera_sensor_info msm_camera_sensor_isx012_data = {
 	.pdata	= &msm_camera_csi_device_data[0],
 	.flash_data	= &flash_isx012,
 	.sensor_platform_info = &sensor_board_info_isx012,
+    .gpio_conf = &rear_gpio_conf,
 	.csi_if	= 1,
 	.camera_type = BACK_CAMERA_2D,
 };
@@ -2604,6 +2605,7 @@ static struct msm_camera_sensor_info msm_camera_sensor_db8131m_data = {
 	.pdata  = &msm_camera_csi_device_data[1],
 	.flash_data     = &flash_db8131m,
 	.sensor_platform_info = &sensor_board_info_db8131m,
+	.gpio_conf = &front_gpio_conf,
 	.csi_if = 1,
 	.camera_type = FRONT_CAMERA_2D,
 };
