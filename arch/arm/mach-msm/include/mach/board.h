@@ -238,6 +238,9 @@ enum msm_camera_vreg_name_t {
 struct msm_camera_sensor_platform_info {
 	int mount_angle;
 	int sensor_reset;
+	int sensor_stby;
+	int vt_sensor_reset;
+	int vt_sensor_stby;
 	struct camera_vreg_t *cam_vreg;
 	int num_vreg;
 	int32_t (*ext_power_ctrl) (int enable);
