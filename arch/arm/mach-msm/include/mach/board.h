@@ -256,7 +256,7 @@ struct msm_camera_sensor_platform_info {
 	int sensor_pwd;
 	int flash_set;
 	int flash_en;
-	void(*sensor_power_on) (int, int);
+	void(*sensor_power_on) (int);
 	void(*sensor_power_off) (int);
 	void(*sensor_isp_reset) (void);
 	void(*sensor_get_fw) (u8 *isp_fw, u8 *phone_fw);
