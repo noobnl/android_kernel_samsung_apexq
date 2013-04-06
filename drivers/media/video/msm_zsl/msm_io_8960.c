@@ -46,14 +46,12 @@ static struct clk *camio_cam_clk;
 static struct clk *camio_jpeg_clk;
 static struct clk *camio_jpeg_pclk;
 static struct regulator *fs_ijpeg;
-#if 0
 #ifndef CONFIG_S5C73M3
 static struct regulator *cam_vana;
 static struct regulator *cam_vio;
 static struct regulator *cam_vdig;
 static struct regulator *cam_vaf;
 static struct regulator *mipi_csi_vdd;
-#endif
 #endif
 static struct msm_camera_io_clk camio_clk;
 static struct platform_device *camio_dev;
@@ -174,7 +172,6 @@ void msm_io_memcpy(void __iomem *dest_addr, void __iomem *src_addr, u32 len)
 	msm_io_dump(dest_addr, len);
 }
 
-#if 0
 static int msm_camera_vreg_enable(struct platform_device *pdev)
 {
 	if (mipi_csi_vdd == NULL) {
@@ -202,7 +199,7 @@ static int msm_camera_vreg_enable(struct platform_device *pdev)
 			goto mipi_csi_vdd_disable;
 		}
 	}
-#if 0
+#ifndef CONFIG_S5C73M3
 	CDBG("%s : XXX\n", __func__);
 
 	if (cam_vana == NULL) {
@@ -324,7 +321,7 @@ static int msm_camera_vreg_enable(struct platform_device *pdev)
 #endif
 	return 0;
 
-#if 0
+cam_vaf_disable:
 	regulator_set_optimum_mode(cam_vaf, 0);
 cam_vaf_release:
 	regulator_set_voltage(cam_vaf, 0, CAM_VAF_MAXUV);
@@ -339,30 +336,19 @@ cam_vdig_release:
 	regulator_set_voltage(cam_vdig, 0, CAM_VDIG_MAXUV);
 	regulator_disable(cam_vdig);
 cam_vdig_put:
-#endif
 	regulator_put(cam_vdig);
 	cam_vdig = NULL;
-#if 0
 cam_vio_disable:
-#endif
 	regulator_disable(cam_vio);
-#if 0
 cam_vio_put:
-#endif
 	regulator_put(cam_vio);
 	cam_vio = NULL;
-#if 0
 cam_vana_disable:
-#endif
 	regulator_set_optimum_mode(cam_vana, 0);
-#if 0
 cam_vana_release:
-#endif
 	regulator_set_voltage(cam_vana, 0, CAM_VANA_MAXUV);
 	regulator_disable(cam_vana);
-#if 0
 cam_vana_put:
-#endif
 	regulator_put(cam_vana);
 	cam_vana = NULL;
 mipi_csi_vdd_disable:
@@ -376,8 +362,7 @@ mipi_csi_vdd_put:
 	mipi_csi_vdd = NULL;
 	return -ENODEV;
 }
-#endif
-#if 0
+
 static void msm_camera_vreg_disable(void)
 {
 	if (mipi_csi_vdd) {
@@ -419,7 +404,7 @@ static void msm_camera_vreg_disable(void)
 		cam_vaf = NULL;
 	}
 }
-#endif
+
 int msm_camio_clk_enable(enum msm_camio_clk_type clktype)
 {
 	int rc = 0;
@@ -686,7 +671,7 @@ int msm_camio_sensor_clk_on(struct platform_device *pdev)
 	msm_camio_clk_enable(CAMIO_CAM_MCLK_CLK);
 	usleep(1*1000);
 
-#if defined(CONFIG_S5C73M3) || defined(CONFIG_S5K6A3YX) || 1
+#if defined(CONFIG_S5C73M3) || defined(CONFIG_S5K6A3YX)
 	if (!strcmp(sinfo->sensor_name, front_cam))
 		sinfo->sensor_platform_info->sensor_power_on(1, 1);
 	else
@@ -715,7 +700,7 @@ int msm_camio_sensor_clk_off(struct platform_device *pdev)
 	char *front_cam = "s5k6a3yx";
 #endif
 
-#if defined(CONFIG_S5C73M3) || defined(CONFIG_S5K6A3YX) || 1
+#if defined(CONFIG_S5C73M3) || defined(CONFIG_S5K6A3YX)
 	if (!strcmp(sinfo->sensor_name, front_cam))
 		sinfo->sensor_platform_info->sensor_power_off(1);
 	else
@@ -725,8 +710,8 @@ int msm_camio_sensor_clk_off(struct platform_device *pdev)
 #endif
 #if 0
 	if (sinfo->sensor_platform_info->privacy_light) {
-//		struct msm8960_privacy_light_cfg *privacy_light_config =
-//			sinfo->sensor_platform_info->privacy_light_info;
+		struct msm8960_privacy_light_cfg *privacy_light_config =
+			sinfo->sensor_platform_info->privacy_light_info;
 		/* UPDATE1031_CAM_TEMP */
 		/*pm8xxx_mpp_config(privacy_light_config->mpp,
 						  &privacy_light_off_config);*/
@@ -757,7 +742,7 @@ int msm_camio_probe_on(struct platform_device *pdev)
 	rc = config_gpio_table(1);
 	if (rc < 0)
 		return rc;
-#if defined(CONFIG_S5C73M3) || defined(CONFIG_S5K6A3YX) || 1
+#if defined(CONFIG_S5C73M3) || defined(CONFIG_S5K6A3YX)
 	if (!strcmp(sinfo->sensor_name, front_cam)) {
 		sinfo->sensor_platform_info->sensor_power_on(1, 0);
 		sinfo->sensor_platform_info->sensor_power_on(1, 1);
@@ -780,7 +765,7 @@ int msm_camio_probe_off(struct platform_device *pdev)
 	char *front_cam = "s5k6a3yx";
 #endif
 
-#if defined(CONFIG_S5C73M3) || defined(CONFIG_S5K6A3YX) || 1
+#if defined(CONFIG_S5C73M3) || defined(CONFIG_S5K6A3YX)
 	if (!strcmp(sinfo->sensor_name, front_cam))
 		sinfo->sensor_platform_info->sensor_power_off(1);
 	else
