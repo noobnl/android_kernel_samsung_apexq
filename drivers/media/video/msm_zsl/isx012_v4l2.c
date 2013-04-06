@@ -22,6 +22,8 @@
 #include <media/v4l2-subdev.h>
 #include <mach/gpio.h>
 #include <mach/camera.h>
+#include <linux/export.h>
+#include <linux/module.h>
 
 #include <asm/mach-types.h>
 #include <mach/vreg.h>
