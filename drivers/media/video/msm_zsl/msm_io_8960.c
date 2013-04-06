@@ -24,7 +24,7 @@
 #include <mach/clk.h>
 #include <mach/msm_bus.h>
 #include <mach/msm_bus_board.h>
-#include <asm/systeminfo.h>
+#include <asm/system_info.h>
 
 #define BUFF_SIZE_128 128
 
