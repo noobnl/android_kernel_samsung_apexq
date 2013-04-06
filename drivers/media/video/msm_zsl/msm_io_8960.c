@@ -686,7 +686,7 @@ int msm_camio_sensor_clk_on(struct platform_device *pdev)
 	msm_camio_clk_enable(CAMIO_CAM_MCLK_CLK);
 	usleep(1*1000);
 
-#if defined(CONFIG_S5C73M3) || defined(CONFIG_S5K6A3YX)
+#if defined(CONFIG_S5C73M3) || defined(CONFIG_S5K6A3YX) || 1
 	if (!strcmp(sinfo->sensor_name, front_cam))
 		sinfo->sensor_platform_info->sensor_power_on(1, 1);
 	else
@@ -715,7 +715,7 @@ int msm_camio_sensor_clk_off(struct platform_device *pdev)
 	char *front_cam = "s5k6a3yx";
 #endif
 
-#if defined(CONFIG_S5C73M3) || defined(CONFIG_S5K6A3YX)
+#if defined(CONFIG_S5C73M3) || defined(CONFIG_S5K6A3YX) || 1
 	if (!strcmp(sinfo->sensor_name, front_cam))
 		sinfo->sensor_platform_info->sensor_power_off(1);
 	else
@@ -757,7 +757,7 @@ int msm_camio_probe_on(struct platform_device *pdev)
 	rc = config_gpio_table(1);
 	if (rc < 0)
 		return rc;
-#if defined(CONFIG_S5C73M3) || defined(CONFIG_S5K6A3YX)
+#if defined(CONFIG_S5C73M3) || defined(CONFIG_S5K6A3YX) || 1
 	if (!strcmp(sinfo->sensor_name, front_cam)) {
 		sinfo->sensor_platform_info->sensor_power_on(1, 0);
 		sinfo->sensor_platform_info->sensor_power_on(1, 1);
@@ -780,7 +780,7 @@ int msm_camio_probe_off(struct platform_device *pdev)
 	char *front_cam = "s5k6a3yx";
 #endif
 
-#if defined(CONFIG_S5C73M3) || defined(CONFIG_S5K6A3YX)
+#if defined(CONFIG_S5C73M3) || defined(CONFIG_S5K6A3YX) || 1
 	if (!strcmp(sinfo->sensor_name, front_cam))
 		sinfo->sensor_platform_info->sensor_power_off(1);
 	else
