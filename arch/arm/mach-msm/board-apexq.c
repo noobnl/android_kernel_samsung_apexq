@@ -316,7 +316,7 @@ static struct msm_gpiomux_config msm8960_sec_ts_configs[] = {
 };
 
 #define MSM_PMEM_ADSP_SIZE         0x4E00000 /* 78 Mbytes */
-#define MSM_PMEM_AUDIO_SIZE        0x160000 /* 1.375 Mbytes */
+#define MSM_PMEM_AUDIO_SIZE        0x4CF000 /* 1.375 Mbytes */
 #define MSM_PMEM_SIZE 0x2800000 /* 40 Mbytes */
 #define MSM_LIQUID_PMEM_SIZE 0x4000000 /* 64 Mbytes */
 #define MSM_HDMI_PRIM_PMEM_SIZE 0x4000000 /* 64 Mbytes */
@@ -336,7 +336,7 @@ static struct msm_gpiomux_config msm8960_sec_ts_configs[] = {
 #else
 #define MSM_ION_MM_SIZE		MSM_PMEM_ADSP_SIZE
 #define MSM_ION_SF_SIZE		0x2200000 /* 34MB */
-#define MSM_ION_QSECOM_SIZE	0x100000 /* (1MB) */
+#define MSM_ION_QSECOM_SIZE	0x1700000 /* (24MB) */
 #ifdef CONFIG_CMA
 #define MSM_ION_HEAP_NUM	9
 #else
@@ -5404,7 +5404,7 @@ static void __init samsung_apexq_init(void)
 	msm8960_pm8921_gpio_mpp_init();
 	platform_add_devices(apexq_devices, ARRAY_SIZE(apexq_devices));
 #if defined(CONFIG_BATTERY_SAMSUNG)
-	msm8960_init_battery();
+//	msm8960_init_battery();
 #endif
 	msm8960_init_hsic();
 	msm8960_init_cam();
