@@ -37,7 +37,6 @@ extern unsigned int system_rev;
 #if (defined(CONFIG_GPIO_SX150X) || defined(CONFIG_GPIO_SX150X_MODULE)) && \
 	defined(CONFIG_I2C)
 
-#if 0
 static struct i2c_board_info cam_expander_i2c_info[] = {
 	{
 		I2C_BOARD_INFO("sx1508q", 0x22),
@@ -50,7 +49,6 @@ static struct msm_cam_expander_info cam_expander_info[] = {
 		MSM_8960_GSBI4_QUP_I2C_BUS_ID,
 	},
 };
-#endif
 #endif
 
 static struct gpiomux_setting cam_settings[] = {
@@ -355,7 +353,6 @@ struct msm_camera_sensor_strobe_flash_data strobe_flash_xenon = {
 	.irq = MSM_GPIO_TO_INT(GPIO_VFE_CAMIF_TIMER3_INT),
 };
 #ifdef CONFIG_MSM_CAMERA_FLASH
-#if 0
 static struct msm_camera_sensor_flash_src msm_flash_src = {
 	.flash_sr_type = MSM_CAMERA_FLASH_SRC_EXT,
 	._fsrc.ext_driver_src.led_en = GPIO_MSM_FLASH_CNTL_EN,
@@ -2422,7 +2419,7 @@ static struct msm_camera_sensor_info msm_camera_sensor_isx012_data = {
 	.pdata	= &msm_camera_csi_device_data[0],
 	.flash_data	= &flash_isx012,
 	.sensor_platform_info = &sensor_board_info_isx012,
-    .gpio_conf = &rear_gpio_conf,
+    .gpio_conf = &msm_8960_back_cam_gpio_conf,
 	.csi_if	= 1,
 	.camera_type = BACK_CAMERA_2D,
 };
@@ -2977,6 +2974,7 @@ static ssize_t cameraflash_file_cmd_store(struct device *dev,
 #endif
 		gpio_set_value_cansleep(gpio_flash_en, 0);
 
+        int i = 0;
 		for (i = 5; i > 1; i--) {
 			gpio_set_value_cansleep(
 				gpio_flash_set, 1);
@@ -3572,6 +3570,5 @@ int __init msm_get_cam_resources(struct msm_camera_sensor_info *s_info)
 	return 0;
 }
 
-#endif
 #endif
 #endif
