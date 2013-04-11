@@ -61,6 +61,10 @@ struct msm_camera_device_platform_data {
 	struct msm_camera_io_ext ioext;
 	struct msm_camera_io_clk ioclk;
 	uint8_t csid_core;
+    uint8_t is_csiphy;
+    uint8_t is_csic;
+    uint8_t is_csid;
+    uint8_t is_ispif;
 	uint8_t is_vpe;
 	struct msm_bus_scale_pdata *cam_bus_scale_table;
 };
@@ -205,18 +209,14 @@ struct msm_camera_csi_lane_params {
 	uint16_t csi_lane_mask;
 	uint8_t csi_phy_sel;
 };
-//#if defined(CONFIG_S5C73M3) && defined(CONFIG_S5K6A3YX) /* D2 */
-struct msm_camera_gpio_conf {
-        void *cam_gpiomux_conf_tbl;
-        uint8_t cam_gpiomux_conf_tbl_size;
-        uint16_t *cam_gpio_tbl;
-        uint8_t cam_gpio_tbl_size;
-};
-//#else
-#if 0
+
 struct msm_camera_gpio_conf {
 	void *cam_gpiomux_conf_tbl;
 	uint8_t cam_gpiomux_conf_tbl_size;
+    uint16_t *cam_gpio_tbl;
+    uint8_t cam_gpio_tbl_size;
+    struct gpio *cam_gpio_common_tbl;
+    uint8_t cam_gpio_common_tbl_size;
 	struct gpio *cam_gpio_req_tbl;
 	uint8_t cam_gpio_req_tbl_size;
 	struct msm_gpio_set_tbl *cam_gpio_set_tbl;
@@ -227,7 +227,7 @@ struct msm_camera_gpio_conf {
 	uint32_t *camera_on_table;
 	uint8_t camera_on_table_size;
 };
-#endif
+
 enum msm_camera_vreg_name_t {
 	CAM_VDIG,
 	CAM_VIO,
