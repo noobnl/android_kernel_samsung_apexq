@@ -2771,6 +2771,13 @@ static struct platform_device msm_device_wcnss_wlan = {
 	.dev		= {.platform_data = &qcom_wcnss_pdata},
 };
 
+#ifdef CONFIG_RADIO_IRIS
+static struct platform_device msm_device_iris_fm __devinitdata = {
+	.name = "iris_fm",
+	.id   = -1,
+};
+#endif
+
 #ifdef CONFIG_QSEECOM
 /* qseecom bus scaling */
 static struct msm_bus_vectors qseecom_clks_init_vectors[] = {
@@ -4595,6 +4602,9 @@ static struct platform_device *common_devices[] __initdata = {
 #endif
 	&msm_slim_ctrl,
 	&msm_device_wcnss_wlan,
+#ifdef CONFIG_RADIO_IRIS
+	&msm_device_iris_fm,
+#endif
 #if defined(CONFIG_QSEECOM)
 	&qseecom_device,
 #endif
@@ -4680,7 +4690,6 @@ static struct platform_device *apexq_devices[] __initdata = {
 	&android_usb_device,
 	&msm_pcm,
 	&msm_multi_ch_pcm,
-	&msm_lowlatency_pcm,
 	&msm_pcm_routing,
 #ifdef CONFIG_SLIMBUS_MSM_CTRL
 	&msm_cpudai0,
