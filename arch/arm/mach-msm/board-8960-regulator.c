@@ -50,7 +50,9 @@ VREG_CONSUMERS(L4) = {
 #if defined(CONFIG_BCM4334) || defined(CONFIG_BCM4334_MODULE)
         REGULATOR_SUPPLY("sdc_vdd",             "msm_sdcc.4"),
 #endif
+#if !defined(CONFIG_MACH_APEXQ)
 	REGULATOR_SUPPLY("sdc_vdd_io",		"msm_sdcc.4"),
+#endif
 };
 VREG_CONSUMERS(L5) = {
 	REGULATOR_SUPPLY("8921_l5",		NULL),
