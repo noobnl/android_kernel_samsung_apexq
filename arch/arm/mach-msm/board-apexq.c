@@ -185,6 +185,14 @@
 #endif
 
 extern unsigned int system_rev;
+#ifdef CONFIG_TOUCHSCREEN_MMS144
+struct tsp_callbacks *charger_callbacks;
+#endif
+
+static struct platform_device msm_fm_platform_init = {
+	.name = "iris_fm",
+	.id   = -1,
+};
 
 #ifdef CONFIG_SEC_DEBUG
 #include <mach/sec_debug.h>
@@ -1323,7 +1331,7 @@ static void fsa9485_charger_cb(bool attached)
 	if (charging_cbs.tsp_set_charging_cable)
 		charging_cbs.tsp_set_charging_cable(attached);
 #endif
-#ifdef CONFIG_TOUCHSCREEN_MMS136
+#ifdef CONFIG_TOUCHSCREEN_MMS144
 	if (charger_callbacks && charger_callbacks->inform_charger)
 		charger_callbacks->inform_charger(charger_callbacks, attached);
 #endif
@@ -1350,39 +1358,9 @@ static void fsa9485_charger_cb(bool attached)
 
 static void fsa9485_uart_cb(bool attached)
 {
-	union power_supply_propval value;
-	int i, ret = 0;
-	struct power_supply *psy;
-
 	pr_info("fsa9485_uart_cb attached %d\n", attached);
 
 	set_cable_status = attached ? CABLE_TYPE_UARTOFF : CABLE_TYPE_NONE;
-
-	if (!gpio_get_value_cansleep(
-		PM8921_GPIO_PM_TO_SYS(
-		PMIC_GPIO_OTG_POWER)))
-		return;
-
-	for (i = 0; i < 10; i++) {
-		psy = power_supply_get_by_name("battery");
-		if (psy)
-			break;
-	}
-
-	if (i == 10) {
-		pr_err("%s: fail to get battery psy\n", __func__);
-		return;
-	}
-
-	value.intval = POWER_SUPPLY_TYPE_UARTOFF;
-
-	ret = psy->set_property(psy, POWER_SUPPLY_PROP_ONLINE,
-		&value);
-
-	if (ret) {
-		pr_err("%s: fail to set power_supply ONLINE property(%d)\n",
-			__func__, ret);
-	}
 }
 
 static struct switch_dev switch_dock = {
@@ -1419,12 +1397,7 @@ static void fsa9485_dock_cb(int attached)
 
 	switch (set_cable_status) {
 	case CABLE_TYPE_CARDOCK:
-		if (!gpio_get_value_cansleep(
-			PM8921_GPIO_PM_TO_SYS(
-			PMIC_GPIO_OTG_POWER))) {
-			value.intval = POWER_SUPPLY_TYPE_BATTERY;
-		} else
-			value.intval = POWER_SUPPLY_TYPE_CARDOCK;
+		value.intval = POWER_SUPPLY_TYPE_CARDOCK;
 		break;
 	case CABLE_TYPE_NONE:
 		value.intval = POWER_SUPPLY_TYPE_BATTERY;
@@ -1993,7 +1966,7 @@ static int taos_power_on(bool onoff)
 	if (system_rev == BOARD_REV00)
 		gpio_set_value(GPIO_PS_EN, onoff ? 1 : 0);
 	sensor_power_on_vdd(SNS_PWR_KEEP, onoff);
-        return -1;
+        return 0;
 }
 
 
@@ -2017,18 +1990,18 @@ static int taos_led_onoff(bool onoff)
 		if (rc) {
 			pr_err("'%s' regulator enable failed, rc=%d\n",
 				"reg_8921_leda", rc);
-			return -1;
+			return 0;
 		}
 	} else {
 		rc = regulator_disable(reg_8921_leda);
 		if (rc) {
 			pr_err("'%s' regulator disable failed, rc=%d\n",
 				"reg_8921_leda", rc);
-			return -1;
+			return 0;
 		}
 	}
 	prev_on = onoff;
-        return -1;
+        return 0;
 
 }
 #endif
@@ -2683,7 +2656,7 @@ static void __init qwerty_keyboard_init(void)
  * does not need to be as high as 2.85V. It is choosen for
  * microphone sensitivity purpose.
  */
-//#ifndef CONFIG_SLIMBUS_MSM_CTRL
+#ifndef CONFIG_SLIMBUS_MSM_CTRL
 static struct wcd9xxx_pdata tabla_i2c_platform_data = {
 	.irq = MSM_GPIO_TO_INT(58),
 	.irq_base = TABLA_INTERRUPT_BASE,
@@ -2739,6 +2712,7 @@ static struct wcd9xxx_pdata tabla_i2c_platform_data = {
 	},
 };
 #endif
+#endif
 #define MSM_WCNSS_PHYS	0x03000000
 #define MSM_WCNSS_SIZE	0x280000
 
@@ -2780,13 +2754,6 @@ static struct platform_device msm_device_wcnss_wlan = {
 	.resource	= resources_wcnss_wlan,
 	.dev		= {.platform_data = &qcom_wcnss_pdata},
 };
-
-#ifdef CONFIG_RADIO_IRIS
-static struct platform_device msm_device_iris_fm __devinitdata = {
-	.name = "iris_fm",
-	.id   = -1,
-};
-#endif
 
 #ifdef CONFIG_QSEECOM
 /* qseecom bus scaling */
@@ -4565,9 +4532,6 @@ static struct platform_device *common_devices[] __initdata = {
 #endif
 	&msm_slim_ctrl,
 	&msm_device_wcnss_wlan,
-#ifdef CONFIG_RADIO_IRIS
-	&msm_device_iris_fm,
-#endif
 #if defined(CONFIG_QSEECOM)
 	&qseecom_device,
 #endif
@@ -4593,6 +4557,7 @@ static struct platform_device *common_devices[] __initdata = {
 #endif
 	&msm_device_vidc,
 	&msm_device_bam_dmux,
+	&msm_fm_platform_init,
 
 #if defined(CONFIG_TSIF) || defined(CONFIG_TSIF_MODULE)
 #ifdef CONFIG_MSM_USE_TSIF1
@@ -5437,6 +5402,11 @@ static void __init samsung_apexq_init(void)
 	BUG_ON(msm_pm_boot_init(&msm_pm_boot_pdata));
 #if 0
 	msm_pm_init_sleep_status_data(&msm_pm_slp_sts_data);
+#endif
+#if defined(CONFIG_BCM4334) || defined(CONFIG_BCM4334_MODULE)
+	printk(KERN_INFO "[WIFI] system_rev = %d\n", system_rev);
+	if (system_rev >= 0x3)
+		brcm_wlan_init();
 #endif
 	msm_pm_set_tz_retention_flag(1);
 
