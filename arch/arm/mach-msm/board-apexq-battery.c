@@ -415,12 +415,12 @@ static struct battery_data_t apexq_battery_data[] = {
 
 static sec_battery_platform_data_t sec_battery_pdata = {
 	/* NO NEED TO BE CHANGED */
-	.initial_check = sec_bat_initial_check,
+//	.initial_check = sec_bat_initial_check,
 	.bat_gpio_init = sec_bat_gpio_init,
 	.fg_gpio_init = sec_fg_gpio_init,
 	.chg_gpio_init = sec_chg_gpio_init,
 
-	.is_lpm = sec_bat_is_lpm,
+//	.is_lpm = sec_bat_is_lpm,
 	.check_jig_status = sec_bat_check_jig_status,
 	.check_cable_callback =
 		sec_bat_check_cable_callback,
