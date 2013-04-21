@@ -118,12 +118,6 @@
 #ifdef CONFIG_PM8921_SEC_CHARGER
 #include <linux/mfd/pm8xxx/pm8921-sec-charger.h>
 #endif
-#ifdef CONFIG_BATTERY_SEC
-#include <linux/sec_battery.h>
-#endif
-#ifdef CONFIG_CHARGER_SMB347
-#include <linux/smb347_charger.h>
-#endif
 #ifdef CONFIG_BATTERY_MAX17040
 #include <linux/max17040_battery.h>
 #endif
@@ -188,11 +182,6 @@ extern unsigned int system_rev;
 #ifdef CONFIG_TOUCHSCREEN_MMS144
 struct tsp_callbacks *charger_callbacks;
 #endif
-
-static struct platform_device msm_fm_platform_init = {
-	.name = "iris_fm",
-	.id   = -1,
-};
 
 #ifdef CONFIG_SEC_DEBUG
 #include <mach/sec_debug.h>
@@ -481,42 +470,34 @@ static struct memtype_reserve msm8960_reserve_table[] __initdata = {
 	},
 };
 
+#if defined(CONFIG_MSM_RTB)
+static struct msm_rtb_platform_data msm_rtb_pdata = {
+	.size = SZ_1M,
+};
+
+static int __init msm_rtb_set_buffer_size(char *p)
+{
+	int s;
+
+	s = memparse(p, NULL);
+	msm_rtb_pdata.size = ALIGN(s, SZ_4K);
+	return 0;
+}
+early_param("msm_rtb_size", msm_rtb_set_buffer_size);
+
+static struct platform_device msm_rtb_device = {
+	.name           = "msm_rtb",
+	.id             = -1,
+	.dev            = {
+		.platform_data = &msm_rtb_pdata,
+	},
+};
+#endif
+
 static void __init reserve_rtb_memory(void)
 {
 #if defined(CONFIG_MSM_RTB)
-	msm8960_reserve_table[MEMTYPE_EBI1].size += msm8960_rtb_pdata.size;
-#endif
-}
-
-static void __init size_pmem_devices(void)
-{
-#ifdef CONFIG_ANDROID_PMEM
-#ifndef CONFIG_MSM_MULTIMEDIA_USE_ION
-	android_pmem_adsp_pdata.size = pmem_adsp_size;
-	android_pmem_pdata.size = pmem_size;
-	android_pmem_audio_pdata.size = MSM_PMEM_AUDIO_SIZE;
-#endif /*CONFIG_MSM_MULTIMEDIA_USE_ION*/
-#endif /*CONFIG_ANDROID_PMEM*/
-}
-
-#ifdef CONFIG_ANDROID_PMEM
-#ifndef CONFIG_MSM_MULTIMEDIA_USE_ION
-static void __init reserve_memory_for(struct android_pmem_platform_data *p)
-{
-	msm8960_reserve_table[p->memory_type].size += p->size;
-}
-#endif /*CONFIG_MSM_MULTIMEDIA_USE_ION*/
-#endif /*CONFIG_ANDROID_PMEM*/
-
-static void __init reserve_pmem_memory(void)
-{
-#ifdef CONFIG_ANDROID_PMEM
-#ifndef CONFIG_MSM_MULTIMEDIA_USE_ION
-	reserve_memory_for(&android_pmem_adsp_pdata);
-	reserve_memory_for(&android_pmem_pdata);
-	reserve_memory_for(&android_pmem_audio_pdata);
-#endif /*CONFIG_MSM_MULTIMEDIA_USE_ION*/
-	msm8960_reserve_table[MEMTYPE_EBI1].size += msm_contig_mem_size;
+	msm8960_reserve_table[MEMTYPE_EBI1].size += msm_rtb_pdata.size;
 #endif
 }
 
@@ -692,6 +673,30 @@ struct platform_device msm8960_fmem_device = {
 	.dev = { .platform_data = &msm8960_fmem_pdata },
 };
 
+static void __init adjust_mem_for_liquid(void)
+{
+	unsigned int i;
+
+		if (machine_is_msm8960_liquid())
+			msm_ion_sf_size = MSM_LIQUID_ION_SF_SIZE;
+
+		if (msm8960_hdmi_as_primary_selected())
+			msm_ion_sf_size = MSM_HDMI_PRIM_ION_SF_SIZE;
+
+		if (machine_is_msm8960_liquid() ||
+			msm8960_hdmi_as_primary_selected()) {
+			for (i = 0; i < msm8960_ion_pdata.nr; i++) {
+				if (msm8960_ion_pdata.heaps[i].id ==
+							ION_SF_HEAP_ID) {
+					msm8960_ion_pdata.heaps[i].size =
+						msm_ion_sf_size;
+					pr_debug("msm_ion_sf_size 0x%x\n",
+						msm_ion_sf_size);
+					break;
+				}
+			}
+		}
+}
 
 static void __init reserve_mem_for_ion(enum ion_memory_types mem_type,
 				      unsigned long size)
@@ -716,6 +721,7 @@ static void __init msm8960_reserve_fixed_area(unsigned long fixed_area_size)
 	BUG_ON(ret);
 #endif
 }
+
 
 /**
  * Reserve memory for ION and calculate amount of reusable memory for fmem.
@@ -742,6 +748,7 @@ static void __init reserve_ion_memory(void)
 	unsigned int middle_use_cma = 0;
 	unsigned int high_use_cma = 0;
 
+	adjust_mem_for_liquid();
 	fixed_low_size = 0;
 	fixed_middle_size = 0;
 	fixed_high_size = 0;
@@ -984,12 +991,11 @@ static void reserve_cache_dump_memory(void)
 
 static void __init msm8960_calculate_reserve_sizes(void)
 {
-	size_pmem_devices();
-	reserve_pmem_memory();
 	reserve_ion_memory();
 	reserve_mdp_memory();
 	reserve_rtb_memory();
 	reserve_cache_dump_memory();
+	msm8960_reserve_table[MEMTYPE_EBI1].size += msm_contig_mem_size;
 }
 
 static struct reserve_info msm8960_reserve_info __initdata = {
@@ -1026,8 +1032,9 @@ static void __init msm8960_reserve(void)
 {
 	msm8960_set_display_params(prim_panel_name, ext_panel_name);
 	msm_reserve();
-
+#ifdef CONFIG_ANDROID_RAM_CONSOLE
 	add_persistent_ram();
+#endif
 
 #ifdef CONFIG_KEXEC_HARDBOOT
 	memblock_remove(KEXEC_HB_PAGE_ADDR, SZ_4K);
@@ -1397,7 +1404,12 @@ static void fsa9485_dock_cb(int attached)
 
 	switch (set_cable_status) {
 	case CABLE_TYPE_CARDOCK:
-		value.intval = POWER_SUPPLY_TYPE_CARDOCK;
+		if (!gpio_get_value_cansleep(
+			PM8921_GPIO_PM_TO_SYS(
+			PMIC_GPIO_OTG_POWER))) {
+			value.intval = POWER_SUPPLY_TYPE_BATTERY;
+		} else
+			value.intval = POWER_SUPPLY_TYPE_CARDOCK;
 		break;
 	case CABLE_TYPE_NONE:
 		value.intval = POWER_SUPPLY_TYPE_BATTERY;
@@ -2658,7 +2670,7 @@ static void __init qwerty_keyboard_init(void)
  */
 #ifndef CONFIG_SLIMBUS_MSM_CTRL
 static struct wcd9xxx_pdata tabla_i2c_platform_data = {
-	.irq = MSM_GPIO_TO_INT(58),
+	.irq = MSM_GPIO_TO_INT(GPIO_CODEC_MAD_INTR),
 	.irq_base = TABLA_INTERRUPT_BASE,
 	.num_irqs = NR_TABLA_IRQS,
 	.reset_gpio = PM8921_GPIO_PM_TO_SYS(38),
@@ -3149,12 +3161,11 @@ static void __init msm8960_init_buses(void)
 static struct msm_spi_platform_data msm8960_qup_spi_gsbi11_pdata = {
 	.max_clock_speed = 48000000, /*15060000,*/
 };
-#else
+#endif
 static struct msm_spi_platform_data msm8960_qup_spi_gsbi1_pdata = {
 	.max_clock_speed = 15060000,
 	.infinite_mode	 = 0xFFC0,
 };
-#endif
 
 #ifdef CONFIG_USB_MSM_OTG_72K
 static struct msm_otg_platform_data msm_otg_pdata;
@@ -4183,14 +4194,6 @@ static struct msm_rpm_platform_data msm_rpm_data = {
 };
 #endif
 
-#if 0
-static struct msm_pm_sleep_status_data msm_pm_slp_sts_data = {
-	.base_addr = MSM_ACC0_BASE + 0x08,
-	.cpu_offset = MSM_ACC1_BASE - MSM_ACC0_BASE,
-	.mask = 1UL << 13,
-};
-#endif
-
 static struct ks8851_pdata spi_eth_pdata = {
 	.irq_gpio = KS8851_IRQ_GPIO,
 	.rst_gpio = KS8851_RST_GPIO,
@@ -4557,7 +4560,6 @@ static struct platform_device *common_devices[] __initdata = {
 #endif
 	&msm_device_vidc,
 	&msm_device_bam_dmux,
-	&msm_fm_platform_init,
 
 #if defined(CONFIG_TSIF) || defined(CONFIG_TSIF_MODULE)
 #ifdef CONFIG_MSM_USE_TSIF1
@@ -4602,6 +4604,7 @@ static struct platform_device *common_devices[] __initdata = {
 #endif
 	&msm8960_iommu_domain_device,
 	&msm_tsens_device,
+	&msm8960_cpu_slp_status,
 };
 
 static struct platform_device *apexq_devices[] __initdata = {
@@ -5318,7 +5321,9 @@ static void __init samsung_apexq_init(void)
 	if (system_rev < BOARD_REV01)
 		qwerty_keyboard_init();
 #endif
+#ifdef CONFIG_ANDROID_RAM_CONSOLE
 	add_ramconsole_devices();
+#endif
 	msm8960_i2c_init();
 	msm8960_gfx_init();
 	if (cpu_is_msm8960ab())
