@@ -1365,9 +1365,39 @@ static void fsa9485_charger_cb(bool attached)
 
 static void fsa9485_uart_cb(bool attached)
 {
+	union power_supply_propval value;
+	int i, ret = 0;
+	struct power_supply *psy;
+
 	pr_info("fsa9485_uart_cb attached %d\n", attached);
 
 	set_cable_status = attached ? CABLE_TYPE_UARTOFF : CABLE_TYPE_NONE;
+
+	if (!gpio_get_value_cansleep(
+		PM8921_GPIO_PM_TO_SYS(
+		PMIC_GPIO_OTG_POWER)))
+		return;
+
+	for (i = 0; i < 10; i++) {
+		psy = power_supply_get_by_name("battery");
+		if (psy)
+			break;
+	}
+
+	if (i == 10) {
+		pr_err("%s: fail to get battery psy\n", __func__);
+		return;
+	}
+
+	value.intval = POWER_SUPPLY_TYPE_UARTOFF;
+
+	ret = psy->set_property(psy, POWER_SUPPLY_PROP_ONLINE,
+		&value);
+
+	if (ret) {
+		pr_err("%s: fail to set power_supply ONLINE property(%d)\n",
+			__func__, ret);
+	}
 }
 
 static struct switch_dev switch_dock = {
@@ -3318,7 +3348,6 @@ static void __init msm_otg_power_init(void)
 		msm_otg_pdata.smb347s = false;
 }
 #endif
-#endif /* CONFIG_USB_MSM_OTG_72K */
 
 #ifdef CONFIG_USB_EHCI_MSM_HSIC
 #define HSIC_HUB_RESET_GPIO	91
@@ -4609,8 +4638,8 @@ static struct platform_device *common_devices[] __initdata = {
 
 static struct platform_device *apexq_devices[] __initdata = {
 	&msm_8960_q6_lpass,
-	&msm_8960_q6_mss_sw,
 	&msm_8960_q6_mss_fw,
+	&msm_8960_q6_mss_sw,
 	&msm_8960_riva,
 	&msm_pil_tzapps,
 	&msm_pil_vidc,
@@ -5436,3 +5465,4 @@ MACHINE_START(APEXQ, "SAMSUNG APEXQ")
 	.init_very_early = msm8960_early_memory,
 	.restart = msm_restart,
 MACHINE_END
+#endif
