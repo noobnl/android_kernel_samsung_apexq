@@ -217,7 +217,7 @@ int gpio_rev(unsigned int index)
 		return gpio_table[index][BOARD_REV04];
 }
 
-#if defined(CONFIG_TOUCHSCREEN_MXT224)
+#ifdef CONFIG_TOUCHSCREEN_MXT224
 static struct charging_status_callbacks {
 	void	(*tsp_set_charging_cable) (int type);
 } charging_cbs;
@@ -1289,7 +1289,7 @@ static void fsa9485_usb_cb(bool attached)
 		return;
 	}
 
-#if defined(CONFIG_TOUCHSCREEN_MXT224)
+#ifdef CONFIG_TOUCHSCREEN_MXT224
 	if (charging_cbs.tsp_set_charging_cable)
 		charging_cbs.tsp_set_charging_cable(attached);
 #endif
@@ -1922,7 +1922,7 @@ static struct platform_device vibetonz_device = {
 };
 #endif /* CONFIG_VIBETONZ */
 
-#if defined(CONFIG_OPTICAL_TAOS_TRITON)
+#ifdef CONFIG_OPTICAL_TAOS_TRITON
 static struct i2c_gpio_platform_data opt_i2c_gpio_data = {
 	.sda_pin = GPIO_SENSOR_ALS_SDA,
 	.scl_pin = GPIO_SENSOR_ALS_SCL,
@@ -1960,7 +1960,7 @@ static struct taos_platform_data taos_pdata = {
 	.coef_d = 1135,
 };
 
-static struct i2c_board_info opt_i2c_borad_info[] = {
+static struct i2c_board_info opt_i2c_board_info[] = {
 	{
 		I2C_BOARD_INFO("taos", 0x39),
 		.platform_data = &taos_pdata,
@@ -2032,14 +2032,14 @@ static int taos_led_onoff(bool onoff)
 		if (rc) {
 			pr_err("'%s' regulator enable failed, rc=%d\n",
 				"reg_8921_leda", rc);
-			return 0;
+			return -1;
 		}
 	} else {
 		rc = regulator_disable(reg_8921_leda);
 		if (rc) {
 			pr_err("'%s' regulator disable failed, rc=%d\n",
 				"reg_8921_leda", rc);
-			return 0;
+			return -1;
 		}
 	}
 	prev_on = onoff;
@@ -2179,7 +2179,7 @@ static struct bmp_i2c_platform_data bmp180_pdata = {
 };
 #endif
 
-static struct i2c_board_info sns_i2c_borad_info[] = {
+static struct i2c_board_info sns_i2c_board_info[] = {
 #ifdef CONFIG_MPU_SENSORS_MPU6050B1
 	{
 	 I2C_BOARD_INFO(SENSOR_MPU_NAME, 0x68),
@@ -2213,7 +2213,7 @@ static struct i2c_board_info sns_i2c_borad_info[] = {
 		.platform_data = &bmp180_pdata,
 	},
 #endif
-#ifdef CONFIG_INPUT_YAS_MAGNETOMETER
+#ifdef CONFIG_INPUT_YAS_532_ENABLE
 	{
 		I2C_BOARD_INFO("geomagnetic", 0x2e),
 	},
@@ -2225,17 +2225,19 @@ static struct i2c_board_info sns_i2c_borad_info[] = {
 	defined(CONFIG_MPU_SENSORS_MPU6050B1_411)
 static void mpl_init(void)
 {
-	int rc;
-	rc = gpio_request(GPIO_MPU3050_INT, "MPUIRQ");
-	if (rc < 0)
-		pr_err("GPIO_MPU3050_INT gpio_request was failed\n");
-	gpio_direction_input(GPIO_MPU3050_INT);
+	int ret = 0;
+	ret = gpio_request(GPIO_MPU3050_INT, "MPUIRQ");
+	if (ret)
+		pr_err("%s gpio request %d err\n", __func__, GPIO_MPU3050_INT);
+	else
+		gpio_direction_input(GPIO_MPU3050_INT);
 
 #if defined(CONFIG_MPU_SENSORS_MPU6050B1)
 	if (system_rev == BOARD_REV01)
 		mpu_data = mpu_data_01;
 	else if (system_rev < BOARD_REV01)
 		mpu_data = mpu_data_00;
+       mpu_data.reset = gpio_rev(GPIO_MAG_RST);
 #endif
 }
 #endif
@@ -2699,10 +2701,32 @@ static void __init qwerty_keyboard_init(void)
  * microphone sensitivity purpose.
  */
 #ifndef CONFIG_SLIMBUS_MSM_CTRL
-static struct wcd9xxx_pdata tabla_i2c_platform_data = {
+static struct wcd9xxx_pdata wcd9xxx_i2c_platform_data = {
 	.irq = MSM_GPIO_TO_INT(GPIO_CODEC_MAD_INTR),
 	.irq_base = TABLA_INTERRUPT_BASE,
 	.num_irqs = NR_TABLA_IRQS,
+	.reset_gpio = PM8921_GPIO_PM_TO_SYS(38),
+	.micbias = {
+		.ldoh_v = TABLA_LDOH_2P85_V,
+		.cfilt1_mv = 1800,
+		.cfilt2_mv = 1800,
+		.cfilt3_mv = 1800,
+		.bias1_cfilt_sel = TABLA_CFILT1_SEL,
+		.bias2_cfilt_sel = TABLA_CFILT2_SEL,
+		.bias3_cfilt_sel = TABLA_CFILT3_SEL,
+		.bias4_cfilt_sel = TABLA_CFILT3_SEL,
+	}
+};
+#endif
+
+static struct wcd9xxx_pdata msm_tabla20_platform_data = {
+	.slimbus_slave_device = {
+                .name = "tabla-slave",
+                .e_addr = {0, 0, 0x60, 0, 0x17, 2},
+        },
+	.irq = MSM_GPIO_TO_INT(GPIO_CODEC_MAD_INTR),
+	.irq_base = TABLA_INTERRUPT_BASE,
+	.num_irqs = NR_WCD9XXX_IRQS,
 	.reset_gpio = PM8921_GPIO_PM_TO_SYS(38),
 	.micbias = {
 		.ldoh_v = TABLA_LDOH_2P85_V,
@@ -2753,8 +2777,28 @@ static struct wcd9xxx_pdata tabla_i2c_platform_data = {
 	},
 	},
 };
+
+static struct slim_device msm_slim_tabla20 = {
+        .name = "tabla2x-slim",
+        .e_addr = {0, 1, 0x60, 0, 0x17, 2},
+        .dev = {
+                .platform_data = &msm_tabla20_platform_data,
+        },
+};
 #endif
+
+static struct slim_boardinfo msm_slim_devices[] = {
+#ifdef CONFIG_SLIMBUS_MSM_CTRL
+        {
+                .bus_num = 1,
+                .slim_slave = &msm_slim_tabla20,
+        },
+
+        /* add more slimbus slaves as needed */
 #endif
+};
+
+
 #define MSM_WCNSS_PHYS	0x03000000
 #define MSM_WCNSS_SIZE	0x280000
 
@@ -2796,6 +2840,13 @@ static struct platform_device msm_device_wcnss_wlan = {
 	.resource	= resources_wcnss_wlan,
 	.dev		= {.platform_data = &qcom_wcnss_pdata},
 };
+
+#ifdef CONFIG_RADIO_IRIS
+static struct platform_device msm_device_iris_fm __devinitdata = {
+	.name = "iris_fm",
+	.id   = -1,
+};
+#endif
 
 #ifdef CONFIG_QSEECOM
 /* qseecom bus scaling */
@@ -3348,6 +3399,7 @@ static void __init msm_otg_power_init(void)
 		msm_otg_pdata.smb347s = false;
 }
 #endif
+#endif /* CONFIG_USB_MSM_OTG_72K */
 
 #ifdef CONFIG_USB_EHCI_MSM_HSIC
 #define HSIC_HUB_RESET_GPIO	91
@@ -4147,22 +4199,22 @@ static struct i2c_board_info mxt_device_info[] __initdata = {
 #define TABLA_DIGITAL1_I2C_SLAVE_ADDR	0x66
 #define TABLA_DIGITAL2_I2C_SLAVE_ADDR	0x55
 
-static struct i2c_board_info tabla_device_info[] __initdata = {
+static struct i2c_board_info wcd9xxx_device_info[] __initdata = {
 	{
 		I2C_BOARD_INFO("tabla top level", TABLA_I2C_SLAVE_ADDR),
-		.platform_data = &tabla_i2c_platform_data,
+		.platform_data = &wcd9xxx_i2c_platform_data,
 	},
 	{
 		I2C_BOARD_INFO("tabla analog", TABLA_ANALOG_I2C_SLAVE_ADDR),
-		.platform_data = &tabla_i2c_platform_data,
+		.platform_data = &wcd9xxx_i2c_platform_data,
 	},
 	{
 		I2C_BOARD_INFO("tabla digital1", TABLA_DIGITAL1_I2C_SLAVE_ADDR),
-		.platform_data = &tabla_i2c_platform_data,
+		.platform_data = &wcd9xxx_i2c_platform_data,
 	},
 	{
 		I2C_BOARD_INFO("tabla digital2", TABLA_DIGITAL2_I2C_SLAVE_ADDR),
-		.platform_data = &tabla_i2c_platform_data,
+		.platform_data = &wcd9xxx_i2c_platform_data,
 	},
 };
 #endif
@@ -4564,6 +4616,9 @@ static struct platform_device *common_devices[] __initdata = {
 #endif
 	&msm_slim_ctrl,
 	&msm_device_wcnss_wlan,
+#ifdef CONFIG_RADIO_IRIS
+	&msm_device_iris_fm,
+#endif
 #if defined(CONFIG_QSEECOM)
 	&qseecom_device,
 #endif
@@ -4584,6 +4639,13 @@ static struct platform_device *common_devices[] __initdata = {
 	&fish_battery_device,
 #endif
 	&msm8960_fmem_device,
+#ifdef CONFIG_ANDROID_PMEM
+#ifndef CONFIG_MSM_MULTIMEDIA_USE_ION
+        &msm8960_android_pmem_device,
+        &msm8960_android_pmem_adsp_device,
+        &msm8960_android_pmem_audio_device,
+#endif
+#endif
 #ifdef CONFIG_KEYBOARD_GPIO
 	&msm8960_gpio_keys_device,
 #endif
@@ -4653,6 +4715,8 @@ static struct platform_device *apexq_devices[] __initdata = {
 #ifdef CONFIG_SLIMBUS_MSM_CTRL
 	&msm_cpudai0,
 	&msm_cpudai1,
+	&msm8960_cpudai_slimbus_2_rx,
+	&msm8960_cpudai_slimbus_2_tx,
 #else
 	&msm_i2s_cpudai0,
 	&msm_i2s_cpudai1,
@@ -4884,7 +4948,7 @@ struct i2c_registry {
 
 
 #ifdef CONFIG_SAMSUNG_CMC624
-static struct i2c_board_info cmc624_i2c_borad_info[] = {
+static struct i2c_board_info cmc624_i2c_board_info[] = {
 	{
 		I2C_BOARD_INFO("cmc624", 0x38),
 	},
@@ -5047,24 +5111,24 @@ static struct i2c_registry msm8960_i2c_devices[] __initdata = {
 	{
 		I2C_SURF | I2C_FFA | I2C_FLUID,
 		MSM_SNS_I2C_BUS_ID,
-		sns_i2c_borad_info,
-		ARRAY_SIZE(sns_i2c_borad_info),
+		sns_i2c_board_info,
+		ARRAY_SIZE(sns_i2c_board_info),
 	},
 #endif
 #ifdef CONFIG_OPTICAL_TAOS_TRITON
 	{
 		I2C_SURF | I2C_FFA | I2C_FLUID,
 		MSM_OPT_I2C_BUS_ID,
-		opt_i2c_borad_info,
-		ARRAY_SIZE(opt_i2c_borad_info),
+		opt_i2c_board_info,
+		ARRAY_SIZE(opt_i2c_board_info),
 	},
 #endif
 #ifdef CONFIG_SAMSUNG_CMC624
 	{
 		I2C_SURF | I2C_FFA | I2C_FLUID ,
 		MSM_CMC624_I2C_BUS_ID,
-		cmc624_i2c_borad_info,
-		ARRAY_SIZE(cmc624_i2c_borad_info),
+		cmc624_i2c_board_info,
+		ARRAY_SIZE(cmc624_i2c_board_info),
 	},
 #endif
 	{
@@ -5083,8 +5147,8 @@ static struct i2c_registry msm8960_i2c_devices[] __initdata = {
 	{
 		I2C_SURF | I2C_FFA | I2C_FLUID,
 		MSM_8960_GSBI1_QUP_I2C_BUS_ID,
-		tabla_device_info,
-		ARRAY_SIZE(tabla_device_info),
+		wcd9xxx_device_info,
+		ARRAY_SIZE(wcd9xxx_device_info),
 	},
 #endif
 
@@ -5184,9 +5248,9 @@ static void __init gpio_rev_init(void)
 
 #if defined(CONFIG_MPU_SENSORS_MPU6050B1_411)
 	if (system_rev < BOARD_REV02)
-		sns_i2c_borad_info[0].platform_data = (void *)&mpu6050_data_00;
+		sns_i2c_board_info[0].platform_data = (void *)&mpu6050_data_00;
 	else
-		sns_i2c_borad_info[0].platform_data = (void *)&mpu6050_data_02;
+		sns_i2c_board_info[0].platform_data = (void *)&mpu6050_data_02;
 #endif
 
 }
@@ -5429,6 +5493,8 @@ static void __init samsung_apexq_init(void)
 	}
 #endif
 
+        slim_register_board_info(msm_slim_devices,
+                ARRAY_SIZE(msm_slim_devices));
 	msm8960_init_dsps();
 #if 0
 	msm_pm_set_rpm_wakeup_irq(RPM_APCC_CPU0_WAKE_UP_IRQ);
@@ -5436,11 +5502,6 @@ static void __init samsung_apexq_init(void)
 	BUG_ON(msm_pm_boot_init(&msm_pm_boot_pdata));
 #if 0
 	msm_pm_init_sleep_status_data(&msm_pm_slp_sts_data);
-#endif
-#if defined(CONFIG_BCM4334) || defined(CONFIG_BCM4334_MODULE)
-	printk(KERN_INFO "[WIFI] system_rev = %d\n", system_rev);
-	if (system_rev >= 0x3)
-		brcm_wlan_init();
 #endif
 	msm_pm_set_tz_retention_flag(1);
 
@@ -5465,4 +5526,3 @@ MACHINE_START(APEXQ, "SAMSUNG APEXQ")
 	.init_very_early = msm8960_early_memory,
 	.restart = msm_restart,
 MACHINE_END
-#endif
