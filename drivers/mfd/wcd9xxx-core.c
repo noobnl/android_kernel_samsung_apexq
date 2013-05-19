@@ -365,6 +365,7 @@ static int wcd9xxx_device_init(struct wcd9xxx *wcd9xxx, int irq)
 	struct mfd_cell *wcd9xxx_dev = NULL;
 	int wcd9xxx_dev_size = 0;
 
+	pr_debug("%s: enter\n", __func__);
 	mutex_init(&wcd9xxx->io_lock);
 	mutex_init(&wcd9xxx->xfer_lock);
 
@@ -397,10 +398,13 @@ static int wcd9xxx_device_init(struct wcd9xxx *wcd9xxx, int irq)
 		dev_err(wcd9xxx->dev, "Failed to add children: %d\n", ret);
 		goto err_irq;
 	}
+	pr_debug("%s: leave\n", __func__);
 	return ret;
 err_irq:
+	pr_debug("%s: err_irq, leaving\n", __func__);
 	wcd9xxx_irq_exit(wcd9xxx);
 err:
+	pr_debug("%s: err, leaving\n", __func__);
 	wcd9xxx_bring_down(wcd9xxx);
 	pm_qos_remove_request(&wcd9xxx->pm_qos_req);
 	mutex_destroy(&wcd9xxx->pm_lock);
@@ -1091,6 +1095,7 @@ static int wcd9xxx_slim_get_laddr(struct slim_device *sb,
 	const unsigned long timeout = jiffies +
 				      msecs_to_jiffies(SLIMBUS_PRESENT_TIMEOUT);
 
+        pr_debug("%s: start\n", __func__);
 	do {
 		ret = slim_get_logical_addr(sb, e_addr, e_len, laddr);
 		if (!ret)
@@ -1100,6 +1105,7 @@ static int wcd9xxx_slim_get_laddr(struct slim_device *sb,
 		pr_debug_ratelimited("%s: retyring get logical addr\n",
 				     __func__);
 	} while time_before(jiffies, timeout);
+        pr_debug("%s: end\n", __func__);
 
 	return ret;
 }
@@ -1110,6 +1116,7 @@ static int wcd9xxx_slim_probe(struct slim_device *slim)
 	struct wcd9xxx_pdata *pdata;
 	int ret = 0;
 
+	pr_debug("%s: enter\n", __func__);
 	if (slim->dev.of_node) {
 		dev_info(&slim->dev, "Platform data from device tree\n");
 		pdata = wcd9xxx_populate_dt_pdata(&slim->dev);
@@ -1214,17 +1221,23 @@ static int wcd9xxx_slim_probe(struct slim_device *slim)
 	}
 #endif
 
+	pr_debug("%s: leaving\n", __func__);
 	return ret;
 
 err_slim_add:
+	pr_debug("%s: err_slim_add\n", __func__);
 	slim_remove_device(wcd9xxx->slim_slave);
 err_reset:
+	pr_debug("%s: err_reset\n", __func__);
 	wcd9xxx_free_reset(wcd9xxx);
 err_supplies:
+	pr_debug("%s: err_supplies\n", __func__);
 	wcd9xxx_disable_supplies(wcd9xxx, pdata);
 err_codec:
+	pr_debug("%s: err_codec\n", __func__);
 	kfree(wcd9xxx);
 err:
+	pr_debug("%s: err\n", __func__);
 	return ret;
 }
 static int wcd9xxx_slim_remove(struct slim_device *pdev)
@@ -1452,6 +1465,7 @@ static int __init wcd9xxx_init(void)
 {
 	int ret1, ret2, ret3, ret4, ret5, ret6;
 
+	pr_debug("%s: enter\n", __func__);
 	ret1 = slim_driver_register(&tabla_slim_driver);
 	if (ret1 != 0)
 		pr_err("Failed to register tabla SB driver: %d\n", ret1);
@@ -1476,6 +1490,7 @@ static int __init wcd9xxx_init(void)
 	if (ret6 != 0)
 		pr_err("Failed to register taiko SB driver: %d\n", ret6);
 
+	pr_debug("%s: leave\n", __func__);
 	return (ret1 && ret2 && ret3 && ret4 && ret5 && ret6) ? -1 : 0;
 }
 module_init(wcd9xxx_init);
