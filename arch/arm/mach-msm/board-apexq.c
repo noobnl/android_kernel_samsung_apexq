@@ -4646,10 +4646,10 @@ static struct platform_device *common_devices[] __initdata = {
 	&msm8960_fmem_device,
 #ifdef CONFIG_ANDROID_PMEM
 #ifndef CONFIG_MSM_MULTIMEDIA_USE_ION
-	&android_pmem_device,
-	&android_pmem_adsp_device,
+	&msm8960_android_pmem_device,
+	&msm8960_android_pmem_adsp_device,
 #endif
-	&android_pmem_audio_device,
+	&msm8960_android_pmem_audio_device,
 #endif
 #ifdef CONFIG_KEYBOARD_GPIO
 	&msm8960_gpio_keys_device,
