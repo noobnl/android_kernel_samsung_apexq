@@ -21,7 +21,7 @@
 #include <linux/i2c/isl9519.h>
 #include <linux/gpio.h>
 #include <linux/msm_ssbi.h>
-#include <linux/regulator/gpio-regulator.h>
+#include <linux/regulator/msm-gpio-regulator.h>
 #include <linux/mfd/pm8xxx/pm8921.h>
 #include <linux/mfd/pm8xxx/pm8xxx-adc.h>
 #include <linux/regulator/consumer.h>
@@ -87,9 +87,6 @@
 #endif
 #ifdef CONFIG_OPTICAL_TAOS_TRITON
 #include <linux/i2c/taos.h>
-#endif
-#ifdef CONFIG_VP_A2220
-#include <sound/a2220.h>
 #endif
 #ifdef CONFIG_INPUT_BMP180
 #include <linux/input/bmp180.h>
@@ -681,6 +678,7 @@ static void __init adjust_mem_for_liquid(void)
 {
 	unsigned int i;
 
+	if (!pmem_param_set) {
 		if (machine_is_msm8960_liquid())
 			msm_ion_sf_size = MSM_LIQUID_ION_SF_SIZE;
 
@@ -700,6 +698,7 @@ static void __init adjust_mem_for_liquid(void)
 				}
 			}
 		}
+	}
 }
 
 static void __init reserve_mem_for_ion(enum ion_memory_types mem_type,
@@ -2705,26 +2704,74 @@ static void __init qwerty_keyboard_init(void)
  * does not need to be as high as 2.85V. It is choosen for
  * microphone sensitivity purpose.
  */
-#ifndef CONFIG_SLIMBUS_MSM_CTRL
-static struct wcd9xxx_pdata wcd9xxx_i2c_platform_data = {
+static struct wcd9xxx_pdata tabla_platform_data = {
+	.slimbus_slave_device = {
+		.name = "tabla-slave",
+		.e_addr = {0, 0, 0x10, 0, 0x17, 2},
+	},
 	.irq = MSM_GPIO_TO_INT(GPIO_CODEC_MAD_INTR),
 	.irq_base = TABLA_INTERRUPT_BASE,
-	.num_irqs = NR_TABLA_IRQS,
+	.num_irqs = NR_WCD9XXX_IRQS,
 	.reset_gpio = PM8921_GPIO_PM_TO_SYS(38),
 	.micbias = {
 		.ldoh_v = TABLA_LDOH_2P85_V,
 		.cfilt1_mv = 1800,
-		.cfilt2_mv = 1800,
+		.cfilt2_mv = 2700,
 		.cfilt3_mv = 1800,
 		.bias1_cfilt_sel = TABLA_CFILT1_SEL,
 		.bias2_cfilt_sel = TABLA_CFILT2_SEL,
 		.bias3_cfilt_sel = TABLA_CFILT3_SEL,
 		.bias4_cfilt_sel = TABLA_CFILT3_SEL,
-	}
+	},
+	.regulator = {
+	{
+		.name = "CDC_VDD_CP",
+		.min_uV = 1800000,
+		.max_uV = 1800000,
+		.optimum_uA = WCD9XXX_CDC_VDDA_CP_CUR_MAX,
+	},
+	{
+		.name = "CDC_VDDA_RX",
+		.min_uV = 1800000,
+		.max_uV = 1800000,
+		.optimum_uA = WCD9XXX_CDC_VDDA_RX_CUR_MAX,
+	},
+	{
+		.name = "CDC_VDDA_TX",
+		.min_uV = 1800000,
+		.max_uV = 1800000,
+		.optimum_uA = WCD9XXX_CDC_VDDA_TX_CUR_MAX,
+	},
+	{
+		.name = "VDDIO_CDC",
+		.min_uV = 1800000,
+		.max_uV = 1800000,
+		.optimum_uA = WCD9XXX_VDDIO_CDC_CUR_MAX,
+	},
+	{
+		.name = "VDDD_CDC_D",
+		.min_uV = 1225000,
+		.max_uV = 1225000,
+		.optimum_uA = WCD9XXX_VDDD_CDC_D_CUR_MAX,
+	},
+	{
+		.name = "CDC_VDDA_A_1P2V",
+		.min_uV = 1225000,
+		.max_uV = 1225000,
+		.optimum_uA = WCD9XXX_VDDD_CDC_A_CUR_MAX,
+	},
+	},
 };
-#endif
 
-static struct wcd9xxx_pdata msm_tabla20_platform_data = {
+static struct slim_device msm_slim_tabla = {
+	.name = "tabla-slim",
+	.e_addr = {0, 1, 0x10, 0, 0x17, 2},
+	.dev = {
+		.platform_data = &tabla_platform_data,
+	},
+};
+
+static struct wcd9xxx_pdata tabla20_platform_data = {
 	.slimbus_slave_device = {
                 .name = "tabla-slave",
                 .e_addr = {0, 0, 0x60, 0, 0x17, 2},
@@ -2784,23 +2831,26 @@ static struct wcd9xxx_pdata msm_tabla20_platform_data = {
 };
 
 static struct slim_device msm_slim_tabla20 = {
-        .name = "tabla2x-slim",
-        .e_addr = {0, 1, 0x60, 0, 0x17, 2},
-        .dev = {
-                .platform_data = &msm_tabla20_platform_data,
-        },
+	.name = "tabla2x-slim",
+	.e_addr = {0, 1, 0x60, 0, 0x17, 2},
+	.dev = {
+		.platform_data = &tabla20_platform_data,
+	},
 };
 #endif
 
 static struct slim_boardinfo msm_slim_devices[] = {
-#ifdef CONFIG_SLIMBUS_MSM_CTRL
-        {
-                .bus_num = 1,
-                .slim_slave = &msm_slim_tabla20,
-        },
-
-        /* add more slimbus slaves as needed */
+#ifdef CONFIG_WCD9310_CODEC
+	{
+		.bus_num = 1,
+		.slim_slave = &msm_slim_tabla,
+	},
+	{
+		.bus_num = 1,
+		.slim_slave = &msm_slim_tabla20,
+	},
 #endif
+	/* add more slimbus slaves as needed */
 };
 
 
@@ -3243,11 +3293,6 @@ static void __init msm8960_init_buses(void)
 #endif
 }
 
-#ifdef CONFIG_S5C73M3
-static struct msm_spi_platform_data msm8960_qup_spi_gsbi11_pdata = {
-	.max_clock_speed = 48000000, /*15060000,*/
-};
-#endif
 static struct msm_spi_platform_data msm8960_qup_spi_gsbi1_pdata = {
 	.max_clock_speed = 15060000,
 	.infinite_mode	 = 0xFFC0,
@@ -4235,6 +4280,7 @@ static struct i2c_board_info sii_device_info[] __initdata = {
 static struct msm_i2c_platform_data msm8960_i2c_qup_gsbi4_pdata = {
 	.clk_freq = 100000,
 	.src_clk_rate = 24000000,
+	.keep_ahb_clk_on = 1,
 };
 
 #ifndef CONFIG_SLIMBUS_MSM_CTRL
@@ -4609,9 +4655,7 @@ static struct platform_device *common_devices[] __initdata = {
 	&msm8960_device_ext_5v_vreg,
 	&msm8960_device_ssbi_pmic,
 	&msm8960_device_ext_otg_sw_vreg,
-#ifndef CONFIG_SLIMBUS_MSM_CTRL
-	&msm8960_device_qup_i2c_gsbi1,
-#endif
+	&msm8960_device_qup_spi_gsbi1,
 	&msm8960_device_qup_i2c_gsbi3,
 	&msm8960_device_qup_i2c_gsbi4,
 	&msm8960_device_qup_i2c_gsbi7,
@@ -4717,15 +4761,10 @@ static struct platform_device *apexq_devices[] __initdata = {
 	&msm_pcm,
 	&msm_multi_ch_pcm,
 	&msm_pcm_routing,
-#ifdef CONFIG_SLIMBUS_MSM_CTRL
 	&msm_cpudai0,
 	&msm_cpudai1,
 	&msm8960_cpudai_slimbus_2_rx,
 	&msm8960_cpudai_slimbus_2_tx,
-#else
-	&msm_i2s_cpudai0,
-	&msm_i2s_cpudai1,
-#endif
 	&msm_cpudai_hdmi_rx,
 	&msm_cpudai_bt_rx,
 	&msm_cpudai_bt_tx,
@@ -4950,15 +4989,6 @@ struct i2c_registry {
 	struct i2c_board_info *info;
 	int                    len;
 };
-
-
-#ifdef CONFIG_SAMSUNG_CMC624
-static struct i2c_board_info cmc624_i2c_board_info[] = {
-	{
-		I2C_BOARD_INFO("cmc624", 0x38),
-	},
-};
-#endif
 
 /* Sensors DSPS platform data */
 #ifdef CONFIG_MSM_DSPS
