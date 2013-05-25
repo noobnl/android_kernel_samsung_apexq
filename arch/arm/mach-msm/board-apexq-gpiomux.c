@@ -153,26 +153,6 @@ static struct gpiomux_setting wcnss_5wire_active_cfg = {
 	.pull = GPIOMUX_PULL_DOWN,
 };
 
-#ifdef CONFIG_MMC_MSM_SDC4_SUPPORT
-static struct gpiomux_setting sdc4_suspend_cfg = {
-	.func = GPIOMUX_FUNC_2,
-	.drv  = GPIOMUX_DRV_2MA,
-	.pull = GPIOMUX_PULL_NONE,
-};
-
-static struct gpiomux_setting sdc4_suspend2_cfg = {
-	.func = GPIOMUX_FUNC_2,
-	.drv  = GPIOMUX_DRV_2MA,
-	.pull = GPIOMUX_PULL_DOWN,
-};
-
-static struct gpiomux_setting sdc4_active_cfg = {
-	.func = GPIOMUX_FUNC_2,
-	.drv  = GPIOMUX_DRV_16MA,
-	.pull = GPIOMUX_PULL_UP,
-};
-#endif
-
 #ifdef CONFIG_USB_EHCI_MSM_HSIC
 static struct gpiomux_setting hsic_act_cfg = {
 	.func = GPIOMUX_FUNC_1,
@@ -279,10 +259,9 @@ static struct gpiomux_setting hdmi_active_4_cfg = {
 	.pull = GPIOMUX_PULL_UP,
 	.dir = GPIOMUX_OUT_HIGH,
 };
-
 #endif
-#if defined(CONFIG_VIDEO_MHL_V1) || defined(CONFIG_VIDEO_MHL_V2)
 
+#if defined(CONFIG_VIDEO_MHL_V1) || defined(CONFIG_VIDEO_MHL_V2)
 static struct gpiomux_setting mhl_suspend_cfg = {
 	.func = GPIOMUX_FUNC_GPIO,
 	.drv = GPIOMUX_DRV_2MA,
@@ -407,14 +386,12 @@ static struct msm_gpiomux_config msm8960_gsbi_configs[] __initdata = {
 		.gpio      = 8,		/* GSBI1 QUP SPI_CS_N */
 		.settings = {
 			[GPIOMUX_SUSPENDED] = &gsbi1,
-			[GPIOMUX_ACTIVE] = &gsbi1,
 		},
 	},
 	{
 		.gpio      = 9,		/* GSBI1 QUP SPI_CLK */
 		.settings = {
 			[GPIOMUX_SUSPENDED] = &gsbi1,
-			[GPIOMUX_ACTIVE] = &gsbi1,
 		},
 	},
 	{
@@ -474,36 +451,6 @@ static struct msm_gpiomux_config msm8960_gsbi_configs[] __initdata = {
 			[GPIOMUX_SUSPENDED] = &gsbi7,
 		},
 	},
-#ifdef CONFIG_S5C73M3
-	{
-		.gpio	   = GPIO_CAM_SPI_MOSI,		/* GSBI11 QUP SPI_DATA_MOSI */
-		.settings = {
-			[GPIOMUX_SUSPENDED] = &spi_suspended_config,
-			[GPIOMUX_ACTIVE] = &spi_active,
-		},
-	},
-	{
-		.gpio	   = GPIO_CAM_SPI_MISO,		/* GSBI11 QUP SPI_DATA_MISO */
-		.settings = {
-			[GPIOMUX_SUSPENDED] = &spi_suspended_config,
-			[GPIOMUX_ACTIVE] = &spi_active,
-		},
-	},
-	{
-		.gpio	   = GPIO_CAM_SPI_SSN,		/* GSBI11 QUP SPI_CS_N */
-		.settings = {
-			[GPIOMUX_SUSPENDED] = &spi_suspended_config,
-			[GPIOMUX_ACTIVE] = &spi_active,
-		},
-	},
-	{
-		.gpio	   = GPIO_CAM_SPI_SCLK,		/* GSBI11 QUP SPI_CLK */
-		.settings = {
-			[GPIOMUX_SUSPENDED] = &spi_suspended_config,
-			[GPIOMUX_ACTIVE] = &spi_active,
-		},
-	},
-#endif
 	{
 		.gpio      = 44,	/* GSBI12 I2C QUP SDA */
 		.settings = {
@@ -759,53 +706,6 @@ static struct msm_gpiomux_config wcnss_5wire_interface[] = {
 		},
 	},
 };
-
-#ifdef CONFIG_MMC_MSM_SDC4_SUPPORT
-static struct msm_gpiomux_config sdc4_interface[] = {
-	{
-		.gpio = 83,
-		.settings = {
-			[GPIOMUX_ACTIVE]    = &sdc4_active_cfg,
-			[GPIOMUX_SUSPENDED] = &sdc4_suspend_cfg,
-		},
-	},
-	{
-		.gpio = 84,
-		.settings = {
-			[GPIOMUX_ACTIVE]    = &sdc4_active_cfg,
-			[GPIOMUX_SUSPENDED] = &sdc4_suspend_cfg,
-		},
-	},
-	{
-		.gpio = 85,
-		.settings = {
-			[GPIOMUX_ACTIVE]    = &sdc4_active_cfg,
-			[GPIOMUX_SUSPENDED] = &sdc4_suspend_cfg,
-		},
-	},
-	{
-		.gpio = 86,
-		.settings = {
-			[GPIOMUX_ACTIVE]    = &sdc4_active_cfg,
-			[GPIOMUX_SUSPENDED] = &sdc4_suspend_cfg,
-		},
-	},
-	{
-		.gpio = 87,
-		.settings = {
-			[GPIOMUX_ACTIVE]    = &sdc4_active_cfg,
-			[GPIOMUX_SUSPENDED] = &sdc4_suspend_cfg,
-		},
-	},
-	{
-		.gpio = 88,
-		.settings = {
-			[GPIOMUX_ACTIVE]    = &sdc4_active_cfg,
-			[GPIOMUX_SUSPENDED] = &sdc4_suspend2_cfg,
-		},
-	},
-};
-#endif
 
 #ifdef CONFIG_USB_EHCI_MSM_HSIC
 static struct msm_gpiomux_config msm8960_hsic_configs[] = {
@@ -1079,25 +979,24 @@ int __init msm8960_init_gpiomux(void)
 	msm_gpiomux_install(wcnss_5wire_interface,
 			ARRAY_SIZE(wcnss_5wire_interface));
 
-#ifdef CONFIG_MMC_MSM_SDC4_SUPPORT
-	if (system_rev >= BOARD_REV04)
-		msm_gpiomux_install(sdc4_interface, ARRAY_SIZE(sdc4_interface));
-	else
-#endif
-    msm_gpiomux_install(nc_configs,
-            ARRAY_SIZE(nc_configs));
-
-        msm_gpiomux_install(msm8960_audio_codec_configs,
-                        ARRAY_SIZE(msm8960_audio_codec_configs));
-
+#ifndef CONFIG_SLIMBUS_MSM_CTRL
 	msm_gpiomux_install(msm8960_audio_i2s_rx_codec_configs,
 			ARRAY_SIZE(msm8960_audio_i2s_tx_codec_configs));
 
 	msm_gpiomux_install(msm8960_audio_i2s_tx_codec_configs,
 			ARRAY_SIZE(msm8960_audio_i2s_tx_codec_configs));
+#else
+	msm_gpiomux_install(msm8960_slimbus_config,
+			ARRAY_SIZE(msm8960_slimbus_config));
 
-       msm_gpiomux_install(nc_configs,
-                       ARRAY_SIZE(nc_configs));
+	msm_gpiomux_install(msm8960_audio_codec_configs,
+			ARRAY_SIZE(msm8960_audio_codec_configs));
+
+#endif
+
+	msm_gpiomux_install(nc_configs,
+			ARRAY_SIZE(nc_configs));
+
 #ifdef CONFIG_USB_SWITCH_FSA9485
 	msm_gpiomux_install(msm8960_fsa9485_configs,
 			ARRAY_SIZE(msm8960_fsa9485_configs));
@@ -1125,8 +1024,8 @@ int __init msm8960_init_gpiomux(void)
 #endif
 
 #if defined(CONFIG_VIDEO_MHL_V1) || defined(CONFIG_VIDEO_MHL_V2)
-                       msm_gpiomux_install(msm8960_mhl_configs,
-                                       ARRAY_SIZE(msm8960_mhl_configs));
+			msm_gpiomux_install(msm8960_mhl_configs,
+					ARRAY_SIZE(msm8960_mhl_configs));
 #endif
 
 	msm_gpiomux_install(msm8960_mdp_vsync_configs,
