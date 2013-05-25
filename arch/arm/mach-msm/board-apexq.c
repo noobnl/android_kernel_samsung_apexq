@@ -51,7 +51,6 @@
 #include <asm/setup.h>
 #include <asm/hardware/gic.h>
 #include <asm/mach/mmc.h>
-#include <linux/platform_data/qcom_wcnss_device.h>
 
 #include <mach/msm_dcvs.h>
 #include <mach/board.h>
@@ -808,7 +807,7 @@ static void __init reserve_ion_memory(void)
 
 			if (fixed_position != NOT_FIXED)
 				fixed_size += heap->size;
-			else
+			else if (!use_cma)
 				reserve_mem_for_ion(MEMTYPE_EBI1, heap->size);
 
 			if (fixed_position == FIXED_LOW) {
@@ -2770,6 +2769,7 @@ static struct slim_device msm_slim_tabla = {
 		.platform_data = &tabla_platform_data,
 	},
 };
+static u8 tabla20_e_addr[6] = {0, 0, 0x60, 0, 0x17, 2};
 
 static struct wcd9xxx_pdata tabla20_platform_data = {
 	.slimbus_slave_device = {
@@ -2852,7 +2852,6 @@ static struct slim_boardinfo msm_slim_devices[] = {
 #endif
 	/* add more slimbus slaves as needed */
 };
-
 
 #define MSM_WCNSS_PHYS	0x03000000
 #define MSM_WCNSS_SIZE	0x280000
@@ -4280,7 +4279,6 @@ static struct i2c_board_info sii_device_info[] __initdata = {
 static struct msm_i2c_platform_data msm8960_i2c_qup_gsbi4_pdata = {
 	.clk_freq = 100000,
 	.src_clk_rate = 24000000,
-	.keep_ahb_clk_on = 1,
 };
 
 #ifndef CONFIG_SLIMBUS_MSM_CTRL
@@ -4331,7 +4329,7 @@ static struct ks8851_pdata spi_eth_pdata = {
 	.rst_gpio = KS8851_RST_GPIO,
 };
 
-static struct spi_board_info spi_eth_info[] __initdata = {
+static struct spi_board_info spi_board_info[] __initdata = {
 	{
 		.modalias               = "ks8851",
 		.irq                    = MSM_GPIO_TO_INT(KS8851_IRQ_GPIO),
@@ -4341,8 +4339,6 @@ static struct spi_board_info spi_eth_info[] __initdata = {
 		.mode                   = SPI_MODE_0,
 		.platform_data		= &spi_eth_pdata
 	},
-};
-static struct spi_board_info spi_board_info[] __initdata = {
 	{
 		.modalias               = "dsi_novatek_3d_panel_spi",
 		.max_speed_hz           = 10800000,
@@ -4655,7 +4651,9 @@ static struct platform_device *common_devices[] __initdata = {
 	&msm8960_device_ext_5v_vreg,
 	&msm8960_device_ssbi_pmic,
 	&msm8960_device_ext_otg_sw_vreg,
-	&msm8960_device_qup_spi_gsbi1,
+#ifndef CONFIG_SLIMBUS_MSM_CTRL
+	&msm8960_device_qup_i2c_gsbi1,
+#endif
 	&msm8960_device_qup_i2c_gsbi3,
 	&msm8960_device_qup_i2c_gsbi4,
 	&msm8960_device_qup_i2c_gsbi7,
@@ -4760,10 +4758,13 @@ static struct platform_device *apexq_devices[] __initdata = {
 	&msm_pcm,
 	&msm_multi_ch_pcm,
 	&msm_pcm_routing,
+#ifdef CONFIG_SLIMBUS_MSM_CTRL
 	&msm_cpudai0,
 	&msm_cpudai1,
-	&msm8960_cpudai_slimbus_2_rx,
-	&msm8960_cpudai_slimbus_2_tx,
+#else
+	&msm_i2s_cpudai0,
+	&msm_i2s_cpudai1,
+#endif
 	&msm_cpudai_hdmi_rx,
 	&msm_cpudai_bt_rx,
 	&msm_cpudai_bt_tx,
@@ -4892,14 +4893,14 @@ static struct msm_rpmrs_level msm_rpmrs_levels[] = {
 		true,
 		415, 715, 340827, 475,
 	},
-
+#if defined(CONFIG_MSM_STANDALONE_POWER_COLLAPSE)
 	{
 		MSM_PM_SLEEP_MODE_POWER_COLLAPSE_STANDALONE,
 		MSM_RPMRS_LIMITS(ON, ACTIVE, MAX, ACTIVE),
 		true,
 		1300, 228, 1200000, 2000,
 	},
-
+#endif
 	{
 		MSM_PM_SLEEP_MODE_POWER_COLLAPSE,
 		MSM_RPMRS_LIMITS(ON, GDHS, MAX, ACTIVE),
