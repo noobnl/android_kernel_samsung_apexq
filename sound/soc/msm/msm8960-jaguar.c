@@ -84,17 +84,8 @@
 
 extern unsigned int system_rev;
 
-#if defined(CONFIG_MACH_APEXQ)
 static u32 top_spk_pamp_gpio;
-#else
-static u32 top_spk_pamp_gpio  = PM8921_GPIO_PM_TO_SYS(PMIC_GPIO_SPK_EN);
-#endif
 static u32 bottom_spk_pamp_gpio = PM8921_GPIO_PM_TO_SYS(PMIC_GPIO_VPS_EN);
-
-#if defined(CONFIG_MACH_JAGUAR)
-static u32 ear_switch_gpio  = PM8921_GPIO_PM_TO_SYS(PMIC_GPIO_EAR_OUT_SEL);
-#endif
-
 static int msm8960_spk_control;
 static int msm8960_ext_bottom_spk_pamp;
 static int msm8960_ext_top_spk_pamp;
@@ -109,13 +100,12 @@ static int msm8960_btsco_ch = 1;
 static struct clk *codec_clk;
 static int clk_users;
 
-static int msm8960_audio_gpios_configured;
+static int msm8960_headset_gpios_configured;
 
 static struct snd_soc_jack hs_jack;
 static struct snd_soc_jack button_jack;
 static struct snd_soc_jack volumedown_jack;
 static struct snd_soc_jack volumeup_jack;
-static atomic_t auxpcm_rsc_ref;
 
 static int msm8960_enable_codec_ext_clk(struct snd_soc_codec *codec, int enable,
 					bool dapm);
@@ -274,7 +264,6 @@ static void msm8960_ext_spk_power_amp_off(u32 spk)
 static void msm8960_ext_control(struct snd_soc_codec *codec)
 {
 	struct snd_soc_dapm_context *dapm = &codec->dapm;
-	mutex_lock(&dapm->codec->mutex);
 
 	pr_debug("%s: msm8960_spk_control = %d", __func__, msm8960_spk_control);
 	if (msm8960_spk_control == MSM8960_SPK_ON ||
@@ -291,7 +280,6 @@ static void msm8960_ext_control(struct snd_soc_codec *codec)
 	}
 
 	snd_soc_dapm_sync(dapm);
-	mutex_unlock(&dapm->codec->mutex);
 }
 
 static int msm8960_get_spk(struct snd_kcontrol *kcontrol,
@@ -351,32 +339,6 @@ static int msm8960_spkramp_event(struct snd_soc_dapm_widget *w,
 	}
 	return 0;
 }
-
-#if defined(CONFIG_MACH_JAGUAR)
-static int msm8960_ear_switch_event(struct snd_soc_dapm_widget *w,
-	struct snd_kcontrol *k, int event)
-{
-	pr_debug("%s: %s Ear Switch gpio\n", __func__,
-		SND_SOC_DAPM_EVENT_ON(event) ? "Enable" : "Disable");
-
-	gpio_direction_output(ear_switch_gpio, SND_SOC_DAPM_EVENT_ON(event));
-
-	return 0;
-}
-#endif
-
-#if defined(CONFIG_MACH_ESPRESSO10_ATT)
-static int msm8960_lineout_switch_event(struct snd_soc_dapm_widget *w,
-	struct snd_kcontrol *k, int event)
-{
-	pr_debug("%s: %s Lineout Switch gpio\n", __func__,
-		SND_SOC_DAPM_EVENT_ON(event) ? "Enable" : "Disable");
-
-	gpio_set_value(GPIO_CRADLE_SW_EN, SND_SOC_DAPM_EVENT_ON(event));
-
-	return 0;
-}
-#endif
 
 static int msm8960_enable_codec_ext_clk(struct snd_soc_codec *codec, int enable,
 		bool dapm)
@@ -446,9 +408,6 @@ static const struct snd_soc_dapm_widget msm8960_dapm_widgets[] = {
 
 	SND_SOC_DAPM_SPK("Ext Spk Top Pos", msm8960_spkramp_event),
 	SND_SOC_DAPM_SPK("Ext Spk Top Neg", msm8960_spkramp_event),
-#if defined(CONFIG_MACH_ESPRESSO10_ATT)
-	SND_SOC_DAPM_SPK("LINEOUT Switch", msm8960_lineout_switch_event),
-#endif
 	SND_SOC_DAPM_MIC("Handset Mic", NULL),
 	SND_SOC_DAPM_MIC("Headset Mic", NULL),
 	SND_SOC_DAPM_MIC("Sub Mic", NULL),
@@ -465,35 +424,6 @@ static const struct snd_soc_dapm_widget msm8960_dapm_widgets[] = {
 
 };
 
-#if defined(CONFIG_MACH_JAGUAR)
-static const struct snd_soc_dapm_widget msm8960_dapm_widgets_rev16[] = {
-
-	SND_SOC_DAPM_SUPPLY("MCLK",  SND_SOC_NOPM, 0, 0,
-	msm8960_mclk_event, SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
-
-	SND_SOC_DAPM_SPK("Ext Spk Bottom Pos", msm8960_spkramp_event),
-	SND_SOC_DAPM_SPK("Ext Spk Bottom Neg", msm8960_spkramp_event),
-
-	SND_SOC_DAPM_SPK("Ext Spk Top Pos", msm8960_spkramp_event),
-	SND_SOC_DAPM_SPK("Ext Spk Top Neg", msm8960_spkramp_event),
-
-	SND_SOC_DAPM_SPK("Ear Switch", msm8960_ear_switch_event),
-
-	SND_SOC_DAPM_MIC("Handset Mic", NULL),
-	SND_SOC_DAPM_MIC("Headset Mic", NULL),
-	SND_SOC_DAPM_MIC("Digital Mic1", NULL),
-	SND_SOC_DAPM_MIC("ANCRight Headset Mic", NULL),
-	SND_SOC_DAPM_MIC("ANCLeft Headset Mic", NULL),
-
-	SND_SOC_DAPM_MIC("Digital Mic1", NULL),
-	SND_SOC_DAPM_MIC("Digital Mic2", NULL),
-	SND_SOC_DAPM_MIC("Digital Mic3", NULL),
-	SND_SOC_DAPM_MIC("Digital Mic4", NULL),
-	SND_SOC_DAPM_MIC("Digital Mic5", NULL),
-	SND_SOC_DAPM_MIC("Digital Mic6", NULL),
-
-};
-#endif
 
 static const struct snd_soc_dapm_route common_audio_map[] = {
 
@@ -505,13 +435,7 @@ static const struct snd_soc_dapm_route common_audio_map[] = {
 
 	{"Ext Spk Top Pos", NULL, "LINEOUT2"},
 	{"Ext Spk Top Neg", NULL, "LINEOUT4"},
-#if defined(CONFIG_MACH_ESPRESSO10_ATT)
-	/*
-	 * ESPRESSO10_ATT has analog switch for
-	 * reducing the pop noise on dock path
-	 */
-	{"LINEOUT Switch", NULL, "LINEOUT5"},
-#endif
+
 	/* Microphone path */
 	/**
 	 *Samsung uses AMIC4 for Handset sub Mic
@@ -584,93 +508,6 @@ static const struct snd_soc_dapm_route common_audio_map[] = {
 	{"DMIC6", NULL, "MIC BIAS4 External"},
 	{"MIC BIAS4 External", NULL, "Digital Mic6"},
 };
-
-#if defined(CONFIG_MACH_JAGUAR)
-static const struct snd_soc_dapm_route common_audio_map_rev16[] = {
-
-	{"EAR_RX_BIAS", NULL, "MCLK"},
-	{"RX_BIAS", NULL, "MCLK"},
-	{"LDO_H", NULL, "MCLK"},
-
-	/* Speaker path */
-
-	{"Ext Spk Top Pos", NULL, "LINEOUT2"},
-	{"Ext Spk Top Neg", NULL, "LINEOUT4"},
-
-	/* Microphone path */
-	/**
-	 *Samsung uses AMIC4 for Handset sub Mic
-	 *AMIC4 uses external MIC BIAS1
-	 */
-	{"AMIC4", NULL, "MIC BIAS1 External"},
-	{"MIC BIAS1 External", NULL, "Handset Mic"},
-
-	{"AMIC2", NULL, "MIC BIAS2 External"},
-	{"MIC BIAS2 External", NULL, "Headset Mic"},
-
-	/**
-	 * AMIC3 and AMIC4 inputs are connected to ANC microphones
-	 * These mics are biased differently on CDP and FLUID
-	 * routing entries below are based on bias arrangement
-	 * on FLUID.
-	 */
-	{ "AMIC3", NULL, "MIC BIAS1 External" },
-
-	{"HEADPHONE", NULL, "LDO_H"},
-	{"Ear Switch", NULL, "HEADPHONE"},
-
-	/**
-	 * The digital Mic routes are setup considering
-	 * fluid as default device.
-	 */
-
-	/**
-	 * Digital Mic1. Front Bottom left Digital Mic on Fluid and MTP.
-	 * Digital Mic GM5 on CDP mainboard.
-	 * Conncted to DMIC2 Input on Tabla codec.
-	 */
-	{"DMIC2", NULL, "MIC BIAS1 External"},
-	{"MIC BIAS1 External", NULL, "Digital Mic1"},
-
-	/**
-	 * Digital Mic2. Front Bottom right Digital Mic on Fluid and MTP.
-	 * Digital Mic GM6 on CDP mainboard.
-	 * Conncted to DMIC1 Input on Tabla codec.
-	 */
-	{"DMIC1", NULL, "MIC BIAS1 External"},
-	{"MIC BIAS1 External", NULL, "Digital Mic2"},
-
-	/**
-	 * Digital Mic3. Back Bottom Digital Mic on Fluid.
-	 * Digital Mic GM1 on CDP mainboard.
-	 * Conncted to DMIC4 Input on Tabla codec.
-	 */
-	{"DMIC4", NULL, "MIC BIAS3 External"},
-	{"MIC BIAS3 External", NULL, "Digital Mic3"},
-
-	/**
-	 * Digital Mic4. Back top Digital Mic on Fluid.
-	 * Digital Mic GM2 on CDP mainboard.
-	 * Conncted to DMIC3 Input on Tabla codec.
-	 */
-	{"DMIC3", NULL, "MIC BIAS3 External"},
-	{"MIC BIAS3 External", NULL, "Digital Mic4"},
-
-	/**
-	 * Digital Mic5. Front top Digital Mic on Fluid.
-	 * Digital Mic GM3 on CDP mainboard.
-	 * Conncted to DMIC5 Input on Tabla codec.
-	 */
-	{"DMIC5", NULL, "MIC BIAS4 External"},
-	{"MIC BIAS4 External", NULL, "Digital Mic5"},
-
-	/* Tabla digital Mic6 - back bottom digital Mic on Liquid and
-	 * bottom mic on CDP. FLUID/MTP do not have dmic6 installed.
-	 */
-	{"DMIC6", NULL, "MIC BIAS4 External"},
-	{"MIC BIAS4 External", NULL, "Digital Mic6"},
-};
-#endif
 
 static const char * const spk_function[] = {"Off", "On"};
 static const char * const slim0_rx_ch_text[] = {"One", "Two"};
@@ -1063,21 +900,9 @@ static int msm8960_audrx_init(struct snd_soc_pcm_runtime *rtd)
 	if (err < 0)
 		return err;
 
-#if defined(CONFIG_MACH_JAGUAR)
-	if (system_rev >= BOARD_REV16)
-		snd_soc_dapm_new_controls(dapm, msm8960_dapm_widgets_rev16,
-			ARRAY_SIZE(msm8960_dapm_widgets_rev16));
-	else
-#endif
 		snd_soc_dapm_new_controls(dapm, msm8960_dapm_widgets,
 			ARRAY_SIZE(msm8960_dapm_widgets));
 
-#if defined(CONFIG_MACH_JAGUAR)
-	if (system_rev >= BOARD_REV16)
-		snd_soc_dapm_add_routes(dapm, common_audio_map_rev16,
-			ARRAY_SIZE(common_audio_map_rev16));
-	else
-#endif
 		snd_soc_dapm_add_routes(dapm, common_audio_map,
 			ARRAY_SIZE(common_audio_map));
 
@@ -1233,6 +1058,8 @@ static int msm8960_slim_0_rx_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
 	rate->min = rate->max = 48000;
 	channels->min = channels->max = msm8960_slim_0_rx_ch;
 
+	pr_info("%s channels %u () sample rate =%d\n",
+			__func__, channels->min, rate->min);
 	return 0;
 }
 
@@ -1245,10 +1072,12 @@ static int msm8960_slim_0_tx_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
 	struct snd_interval *channels = hw_param_interval(params,
 			SNDRV_PCM_HW_PARAM_CHANNELS);
 
-	pr_debug("%s()\n", __func__);
-	rate->min = rate->max = 48000;
+	rate->min = rate->max = msm8960_slim_0_sample_rate;
+
 	channels->min = channels->max = msm8960_slim_0_tx_ch;
 
+	pr_info("%s channels %u () sample rate =%d\n",
+			__func__, channels->min, rate->min);
 	return 0;
 }
 
@@ -1591,15 +1420,19 @@ static int msm8960_i2s_startup(struct snd_pcm_substream *substream)
 	return ret;
 }
 
+static int msm8960_startup(struct snd_pcm_substream *substream)
+{
+	pr_debug("%s(): substream = %s  stream = %d\n", __func__,
+		 substream->name, substream->stream);
+	return 0;
+}
+
 static int msm8960_auxpcm_startup(struct snd_pcm_substream *substream)
 {
 	int ret = 0;
 
-	pr_debug("%s(): substream = %s, auxpcm_rsc_ref counter = %d\n",
-		__func__, substream->name, atomic_read(&auxpcm_rsc_ref));
-	if (atomic_inc_return(&auxpcm_rsc_ref) == 1)
-		ret = msm8960_aux_pcm_get_gpios();
-
+	pr_debug("%s(): substream = %s\n", __func__, substream->name);
+	ret = msm8960_aux_pcm_get_gpios();
 	if (ret < 0) {
 		pr_err("%s: Aux PCM GPIO request failed\n", __func__);
 		return -EINVAL;
@@ -1609,18 +1442,9 @@ static int msm8960_auxpcm_startup(struct snd_pcm_substream *substream)
 
 static void msm8960_auxpcm_shutdown(struct snd_pcm_substream *substream)
 {
-	pr_debug("%s(): substream = %s, auxpcm_rsc_ref counter = %d\n",
-		__func__, substream->name, atomic_read(&auxpcm_rsc_ref));
-	if (atomic_dec_return(&auxpcm_rsc_ref) == 0)
-		msm8960_aux_pcm_free_gpios();
-}
 
-/* Not used */
-static int msm8960_startup(struct snd_pcm_substream *substream)
-{
-	pr_info("%s(): substream = %s  stream = %d\n", __func__,
-		 substream->name, substream->stream);
-	return 0;
+	pr_debug("%s(): substream = %s\n", __func__, substream->name);
+	msm8960_aux_pcm_free_gpios();
 }
 
 static void msm8960_shutdown(struct snd_pcm_substream *substream)
@@ -1647,7 +1471,6 @@ static struct snd_soc_ops msm8960_auxpcm_be_ops = {
 
 static struct snd_soc_dai_link *msm8960_dai_list;
 
-#ifndef CONFIG_SLIMBUS_MSM_CTRL
 static struct snd_soc_dai_link msm8960_i2s_be_dai[] = {
 	{
 		.name = LPASS_BE_PRI_I2S_RX,
@@ -1675,7 +1498,6 @@ static struct snd_soc_dai_link msm8960_i2s_be_dai[] = {
 		.ops = &msm8960_i2s_be_ops,
 	},
 };
-#else
 static struct snd_soc_dai_link msm8960_slimbus_be_dai[] = {
 	{
 		.name = LPASS_BE_SLIMBUS_0_RX,
@@ -1703,7 +1525,7 @@ static struct snd_soc_dai_link msm8960_slimbus_be_dai[] = {
 		.ops = &msm8960_be_ops,
 	},
 };
-#endif
+
 /* Digital audio interface glue - connects codec <---> CPU */
 static struct snd_soc_dai_link msm8960_dai[] = {
 	/* FrontEnd DAI Links */
@@ -2073,7 +1895,7 @@ static struct platform_device *msm8960_snd_device;
 #define PMIC_GPIO_USEURO_SWITCH 35
 #endif
 
-static int msm8960_configure_audio_gpios(void)
+static int msm8960_configure_headset_mic_gpios(void)
 {
 	printk(KERN_INFO "%s: start", __func__);
 	int ret;
@@ -2164,54 +1986,16 @@ else
 	} else
 		gpio_direction_output(top_spk_pamp_gpio, 0);
 
-#if defined(CONFIG_MACH_JAGUAR)
-	if (system_rev >= BOARD_REV16) {
-		ret = gpio_request(ear_switch_gpio, "EAR_OUT_SEL");
-		if (ret) {
-			pr_err("%s: Failed to request gpio %d\n", __func__,
-				ear_switch_gpio);
-			return ret;
-		}
-
-		ret = pm8xxx_gpio_config(ear_switch_gpio, &param);
-		if (ret) {
-			pr_err("%s: Failed to configure gpio %d\n", __func__,
-				ear_switch_gpio);
-			gpio_free(ear_switch_gpio);
-			return ret;
-		} else
-			gpio_direction_output(ear_switch_gpio, 0);
-	}
-#endif
-
-#if defined(CONFIG_MACH_ESPRESSO10_ATT)
-	ret = gpio_request(GPIO_CRADLE_SW_EN, "CRADLE_SW_EN");
-	if (ret) {
-		pr_err("%s: Failed to request gpio %d\n", __func__,
-			GPIO_CRADLE_SW_EN);
-		gpio_free(PM8921_GPIO_PM_TO_SYS(23));
-		gpio_free(PM8921_GPIO_PM_TO_SYS(PMIC_GPIO_USEURO_SWITCH));
-		gpio_free(bottom_spk_pamp_gpio);
-		gpio_free(top_spk_pamp_gpio);
-		return ret;
-	}
-
-	gpio_tlmm_config(GPIO_CFG(GPIO_CRADLE_SW_EN, 0, GPIO_CFG_OUTPUT,
-				GPIO_CFG_NO_PULL, GPIO_CFG_2MA), 1);
-#endif
 	printk(KERN_INFO "%s: end", __func__);
 	return 0;
 }
-static void msm8960_free_audio_gpios(void)
+static void msm8960_free_headset_mic_gpios(void)
 {
-	if (msm8960_audio_gpios_configured) {
+	if (msm8960_headset_gpios_configured) {
 		gpio_free(PM8921_GPIO_PM_TO_SYS(23));
 		gpio_free(PM8921_GPIO_PM_TO_SYS(PMIC_GPIO_USEURO_SWITCH));
 		gpio_free(top_spk_pamp_gpio);
 		gpio_free(bottom_spk_pamp_gpio);
-#if defined(CONFIG_MACH_ESPRESSO10_ATT)
-		gpio_free(GPIO_CRADLE_SW_EN);
-#endif
 	}
 }
 
@@ -2263,12 +2047,12 @@ static int __init msm8960_audio_init(void)
 		return ret;
 	}
 
-	if (msm8960_configure_audio_gpios()) {
+	if (msm8960_configure_headset_mic_gpios()) {
 		pr_err("%s Fail to configure headset mic gpios\n", __func__);
-		msm8960_audio_gpios_configured = 0;
+		msm8960_headset_gpios_configured = 0;
 	} else {
 		printk(KERN_INFO "%s: msm8960_audio_gpios_configured", __func__);
-		msm8960_audio_gpios_configured = 1;
+		msm8960_headset_gpios_configured = 1;
 	}
 
 	mutex_init(&cdc_mclk_mutex);
@@ -2283,7 +2067,7 @@ module_init(msm8960_audio_init);
 
 static void __exit msm8960_audio_exit(void)
 {
-	msm8960_free_audio_gpios();
+	msm8960_free_headset_mic_gpios();
 	kfree(msm8960_dai_list);
 	platform_device_unregister(msm8960_snd_device);
 	kfree(mbhc_cfg.calibration);
