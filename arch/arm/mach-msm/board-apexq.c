@@ -3448,7 +3448,6 @@ static void __init msm_otg_power_init(void)
 		msm_otg_pdata.smb347s = false;
 }
 #endif
-#endif /* CONFIG_USB_MSM_OTG_72K */
 
 #ifdef CONFIG_USB_EHCI_MSM_HSIC
 #define HSIC_HUB_RESET_GPIO	91
@@ -4248,22 +4247,22 @@ static struct i2c_board_info mxt_device_info[] __initdata = {
 #define TABLA_DIGITAL1_I2C_SLAVE_ADDR	0x66
 #define TABLA_DIGITAL2_I2C_SLAVE_ADDR	0x55
 
-static struct i2c_board_info wcd9xxx_device_info[] __initdata = {
+static struct i2c_board_info tabla_device_info[] __initdata = {
 	{
 		I2C_BOARD_INFO("tabla top level", TABLA_I2C_SLAVE_ADDR),
-		.platform_data = &wcd9xxx_i2c_platform_data,
+		.platform_data = &tabla_i2c_platform_data,
 	},
 	{
 		I2C_BOARD_INFO("tabla analog", TABLA_ANALOG_I2C_SLAVE_ADDR),
-		.platform_data = &wcd9xxx_i2c_platform_data,
+		.platform_data = &tabla_i2c_platform_data,
 	},
 	{
 		I2C_BOARD_INFO("tabla digital1", TABLA_DIGITAL1_I2C_SLAVE_ADDR),
-		.platform_data = &wcd9xxx_i2c_platform_data,
+		.platform_data = &tabla_i2c_platform_data,
 	},
 	{
 		I2C_BOARD_INFO("tabla digital2", TABLA_DIGITAL2_I2C_SLAVE_ADDR),
-		.platform_data = &wcd9xxx_i2c_platform_data,
+		.platform_data = &tabla_i2c_platform_data,
 	},
 };
 #endif
@@ -5182,8 +5181,8 @@ static struct i2c_registry msm8960_i2c_devices[] __initdata = {
 	{
 		I2C_SURF | I2C_FFA | I2C_FLUID,
 		MSM_8960_GSBI1_QUP_I2C_BUS_ID,
-		wcd9xxx_device_info,
-		ARRAY_SIZE(wcd9xxx_device_info),
+		tabla_device_info,
+		ARRAY_SIZE(tabla_device_info),
 	},
 #endif
 
@@ -5561,3 +5560,4 @@ MACHINE_START(APEXQ, "SAMSUNG APEXQ")
 	.init_very_early = msm8960_early_memory,
 	.restart = msm_restart,
 MACHINE_END
+#endif
