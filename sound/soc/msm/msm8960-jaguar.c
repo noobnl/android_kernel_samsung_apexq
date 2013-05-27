@@ -27,7 +27,10 @@
 #include <linux/mfd/wcd9xxx/core.h>
 #include "msm-pcm-routing.h"
 #include "../codecs/wcd9310.h"
-#include <asm/system_info.h>
+#include <mach/msm8960-gpio.h>
+#include <linux/gpio.h>
+
+extern unsigned int system_rev;
 
 /* 8960 machine driver */
 
