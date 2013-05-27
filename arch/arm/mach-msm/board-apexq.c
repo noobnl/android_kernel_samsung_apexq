@@ -4760,6 +4760,8 @@ static struct platform_device *apexq_devices[] __initdata = {
 #ifdef CONFIG_SLIMBUS_MSM_CTRL
 	&msm_cpudai0,
 	&msm_cpudai1,
+        &msm8960_cpudai_slimbus_2_rx,
+        &msm8960_cpudai_slimbus_2_tx,
 #else
 	&msm_i2s_cpudai0,
 	&msm_i2s_cpudai1,
