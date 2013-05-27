@@ -979,20 +979,14 @@ int __init msm8960_init_gpiomux(void)
 	msm_gpiomux_install(wcnss_5wire_interface,
 			ARRAY_SIZE(wcnss_5wire_interface));
 
-#ifndef CONFIG_SLIMBUS_MSM_CTRL
-	msm_gpiomux_install(msm8960_audio_i2s_rx_codec_configs,
-			ARRAY_SIZE(msm8960_audio_i2s_tx_codec_configs));
-
-	msm_gpiomux_install(msm8960_audio_i2s_tx_codec_configs,
-			ARRAY_SIZE(msm8960_audio_i2s_tx_codec_configs));
-#else
 	msm_gpiomux_install(msm8960_slimbus_config,
 			ARRAY_SIZE(msm8960_slimbus_config));
 
 	msm_gpiomux_install(msm8960_audio_codec_configs,
 			ARRAY_SIZE(msm8960_audio_codec_configs));
 
-#endif
+	msm_gpiomux_install(msm8960_audio_auxpcm_configs,
+			ARRAY_SIZE(msm8960_audio_auxpcm_configs));
 
 	msm_gpiomux_install(nc_configs,
 			ARRAY_SIZE(nc_configs));
