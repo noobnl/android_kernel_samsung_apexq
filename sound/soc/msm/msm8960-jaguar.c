@@ -27,6 +27,7 @@
 #include <linux/mfd/wcd9xxx/core.h>
 #include "msm-pcm-routing.h"
 #include "../codecs/wcd9310.h"
+#include <asm/system_info.h>
 
 /* 8960 machine driver */
 
