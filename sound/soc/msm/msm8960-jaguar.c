@@ -1788,7 +1788,7 @@ static int msm8960_configure_headset_mic_gpios(void)
 		pr_err("%s: Failed to configure Bottom Spk Ampl"
 			" gpio %u\n", __func__, bottom_spk_pamp_gpio);
 		 gpio_free(PM8921_GPIO_PM_TO_SYS(23));
-		 gpio_free(PM8921_GPIO_PM_TO_SYS(JACK_US_EURO_SEL_GPIO);
+		 gpio_free(PM8921_GPIO_PM_TO_SYS(JACK_US_EURO_SEL_GPIO));
 		 gpio_free(bottom_spk_pamp_gpio);
 		return ret;
 	} else
