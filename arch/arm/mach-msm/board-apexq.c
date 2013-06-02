@@ -213,7 +213,7 @@ int gpio_rev(unsigned int index)
 		return gpio_table[index][BOARD_REV04];
 }
 
-#ifdef CONFIG_TOUCHSCREEN_MXT224
+#if defined(CONFIG_TOUCHSCREEN_MXT224)
 static struct charging_status_callbacks {
 	void	(*tsp_set_charging_cable) (int type);
 } charging_cbs;
@@ -279,6 +279,7 @@ struct sx150x_platform_data msm8960_sx150x_data[] = {
 
 #endif
 
+#if 0
 static struct gpiomux_setting sec_ts_ldo_act_cfg = {
 	.func = GPIOMUX_FUNC_GPIO,
 	.drv = GPIOMUX_DRV_8MA,
@@ -300,6 +301,7 @@ static struct msm_gpiomux_config msm8960_sec_ts_configs[] = {
 		},
 	},
 };
+#endif
 
 #define MSM_PMEM_ADSP_SIZE         0x4E00000 /* 78 Mbytes */
 #define MSM_PMEM_AUDIO_SIZE        0x4CF000
@@ -1292,7 +1294,7 @@ static void fsa9485_usb_cb(bool attached)
 		return;
 	}
 
-#ifdef CONFIG_TOUCHSCREEN_MXT224
+#if defined(CONFIG_TOUCHSCREEN_MXT224)
 	if (charging_cbs.tsp_set_charging_cable)
 		charging_cbs.tsp_set_charging_cable(attached);
 #endif
@@ -1341,7 +1343,7 @@ static void fsa9485_charger_cb(bool attached)
 	if (charging_cbs.tsp_set_charging_cable)
 		charging_cbs.tsp_set_charging_cable(attached);
 #endif
-#ifdef CONFIG_TOUCHSCREEN_MMS144
+#ifdef CONFIG_TOUCHSCREEN_MMS136
 	if (charger_callbacks && charger_callbacks->inform_charger)
 		charger_callbacks->inform_charger(charger_callbacks, attached);
 #endif
@@ -1665,18 +1667,35 @@ static void msm8960_mhl_gpio_init(void)
 {
 	int ret;
 
-	ret = gpio_request(GPIO_MHL_EN, "mhl_en");
+	ret = gpio_request(GPIO_MHL_SEL, "mhl_sel");
 	if (ret < 0) {
-		pr_err("mhl_en gpio_request is failed\n");
+		pr_err("mhl_sel gpio_request is failed\n");
 		return;
 	}
 
 	ret = gpio_request(GPIO_MHL_RST, "mhl_rst");
 	if (ret < 0) {
-		pr_err("mhl_rst gpio_request is failed\n");
+		pr_err("mhl_sel gpio_request is failed\n");
 		return;
 	}
 
+	ret = gpio_request(GPIO_MHL_EN, "mhl_en");
+	if (ret < 0) {
+		pr_err("mhl_en gpio_request is failed\n");
+		return;
+	}
+	ret = gpio_request(GPIO_MHL_WAKE_UP, "mhl_wakeup");
+	if (ret < 0) {
+		pr_err("mhl_en gpio_request is failed\n");
+		return;
+	}
+}
+
+static void cfg_mhl_sel(bool onoff)
+{
+	gpio_direction_output(GPIO_MHL_SEL, onoff ? 1 : 0);
+	pr_info("mhl_sel :%d in fsa9485\n",
+				gpio_get_value_cansleep(GPIO_MHL_SEL));
 }
 
 static void mhl_gpio_config(void)
@@ -1719,28 +1738,29 @@ static void sii9234_hw_onoff(bool onoff)
 	int rc;
 	/*VPH_PWR : mhl_power_source
 	VMHL_3.3V, VSIL_A_1.2V, VMHL_1.8V
-	just power control with HDMI_EN pin or control Regulator12*/
+	just power control with HDMI_EN pin and control Regulator12*/
 	if (onoff) {
 		gpio_tlmm_config(GPIO_CFG(GPIO_MHL_EN, 0, GPIO_CFG_OUTPUT,
 			GPIO_CFG_PULL_UP, GPIO_CFG_2MA), 1);
 
 		mhl_l12 = regulator_get(NULL, "8921_l12");
 		rc = regulator_set_voltage(mhl_l12, 1200000, 1200000);
-			if (rc)
-				pr_err("error setting voltage\n");
-			rc = regulator_enable(mhl_l12);
-				if (rc)
-					pr_err("error enabling regulator\n");
-			usleep(1*1000);
+		if (rc)
+			pr_err("error setting voltage\n");
+		rc = regulator_enable(mhl_l12);
+		if (rc)
+			pr_err("error enabling regulator\n");
+		usleep(1*1000);
+
 		gpio_direction_output(GPIO_MHL_EN, 1);
 	} else {
 		gpio_direction_output(GPIO_MHL_EN, 0);
 
 		if (mhl_l12) {
 			rc = regulator_disable(mhl_l12);
-				if (rc)
-					pr_err("error disabling regulator\n");
-		}
+			if (rc)
+				pr_err("error disabling regulator\n");
+	}
 
 		usleep_range(10000, 20000);
 
@@ -1784,6 +1804,7 @@ struct sii9234_platform_data sii9234_pdata = {
 	.gpio_cfg = mhl_gpio_config,
 	.swing_level = 0xF5,
 #if defined(CONFIG_VIDEO_MHL_V2)
+	.mhl_sel = cfg_mhl_sel,
 	.vbus_present = fsa9485_mhl_cb,
 #endif
 };
@@ -1925,7 +1946,7 @@ static struct platform_device vibetonz_device = {
 };
 #endif /* CONFIG_VIBETONZ */
 
-#ifdef CONFIG_OPTICAL_TAOS_TRITON
+#if defined(CONFIG_OPTICAL_TAOS_TRITON)
 static struct i2c_gpio_platform_data opt_i2c_gpio_data = {
 	.sda_pin = GPIO_SENSOR_ALS_SDA,
 	.scl_pin = GPIO_SENSOR_ALS_SCL,
@@ -2067,6 +2088,7 @@ static int taos_led_onoff(bool onoff)
 			0, 0, -1},
 	.poweron = mpu_power_on,
 	};
+#if 0
 	/* compass */
 	static struct ext_slave_platform_data inv_mpu_yas530_data = {
 	.bus		= EXT_SLAVE_BUS_PRIMARY,
@@ -2074,6 +2096,7 @@ static int taos_led_onoff(bool onoff)
 			0, 1, 0,
 			0, 0, 1},
 	};
+#endif
 #endif
 
 #ifdef CONFIG_MPU_SENSORS_MPU6050B1
@@ -2216,7 +2239,7 @@ static struct i2c_board_info sns_i2c_board_info[] = {
 		.platform_data = &bmp180_pdata,
 	},
 #endif
-#ifdef CONFIG_INPUT_YAS_532_ENABLE
+#ifdef CONFIG_INPUT_YAS_MAGNETOMETER
 	{
 		I2C_BOARD_INFO("geomagnetic", 0x2e),
 	},
@@ -2228,13 +2251,11 @@ static struct i2c_board_info sns_i2c_board_info[] = {
 	defined(CONFIG_MPU_SENSORS_MPU6050B1_411)
 static void mpl_init(void)
 {
-	int ret = 0;
-	ret = gpio_request(GPIO_MPU3050_INT, "MPUIRQ");
-	if (ret)
-		pr_err("%s gpio request %d err\n", __func__, GPIO_MPU3050_INT);
-	else
-		gpio_direction_input(GPIO_MPU3050_INT);
-
+	int rc;
+	rc = gpio_request(GPIO_MPU3050_INT, "MPUIRQ");
+	if (rc < 0)
+		pr_err("GPIO_MPU3050_INT gpio_request was failed\n");
+	gpio_direction_input(GPIO_MPU3050_INT);
 #if defined(CONFIG_MPU_SENSORS_MPU6050B1)
 	if (system_rev == BOARD_REV01)
 		mpu_data = mpu_data_01;
@@ -2703,6 +2724,24 @@ static void __init qwerty_keyboard_init(void)
  * does not need to be as high as 2.85V. It is choosen for
  * microphone sensitivity purpose.
  */
+#ifndef CONFIG_SLIMBUS_MSM_CTRL
+static struct tabla_pdata tabla_i2c_platform_data = {
+	.irq = MSM_GPIO_TO_INT(GPIO_CODEC_MAD_INTR),
+	.irq_base = TABLA_INTERRUPT_BASE,
+	.num_irqs = NR_TABLA_IRQS,
+	.reset_gpio = PM8921_GPIO_PM_TO_SYS(38),
+	.micbias = {
+		.ldoh_v = TABLA_LDOH_2P85_V,
+		.cfilt1_mv = 1800,
+		.cfilt2_mv = 1800,
+		.cfilt3_mv = 1800,
+		.bias1_cfilt_sel = TABLA_CFILT1_SEL,
+		.bias2_cfilt_sel = TABLA_CFILT2_SEL,
+		.bias3_cfilt_sel = TABLA_CFILT3_SEL,
+		.bias4_cfilt_sel = TABLA_CFILT3_SEL,
+	}
+};
+#endif
 static struct wcd9xxx_pdata tabla_platform_data = {
 	.slimbus_slave_device = {
 		.name = "tabla-slave",
@@ -2769,7 +2808,6 @@ static struct slim_device msm_slim_tabla = {
 		.platform_data = &tabla_platform_data,
 	},
 };
-static u8 tabla20_e_addr[6] = {0, 0, 0x60, 0, 0x17, 2};
 
 static struct wcd9xxx_pdata tabla20_platform_data = {
 	.slimbus_slave_device = {
@@ -3292,15 +3330,16 @@ static void __init msm8960_init_buses(void)
 #endif
 }
 
+#if 0
 static struct msm_spi_platform_data msm8960_qup_spi_gsbi1_pdata = {
 	.max_clock_speed = 15060000,
-	.infinite_mode	 = 0xFFC0,
 };
+#endif
 
 #ifdef CONFIG_USB_MSM_OTG_72K
 static struct msm_otg_platform_data msm_otg_pdata;
 #else
-static void msm_hsusb_vbus_power(bool on)
+static int msm_hsusb_vbus_power(bool on)
 {
 	int rc;
 	static bool vbus_is_on;
@@ -3316,14 +3355,14 @@ static void msm_hsusb_vbus_power(bool on)
 	};
 
 	if (vbus_is_on == on)
-		return;
+		return 0;
 
 	if (on) {
 		mvs_otg_switch = regulator_get(&msm8960_device_otg.dev,
 					       "vbus_otg");
 		if (IS_ERR(mvs_otg_switch)) {
 			pr_err("Unable to get mvs_otg_switch\n");
-			return;
+			return -1;
 		}
 
 		rc = gpio_request(PM8921_GPIO_PM_TO_SYS(PMIC_GPIO_OTG_EN),
@@ -3345,7 +3384,7 @@ static void msm_hsusb_vbus_power(bool on)
 			goto disable_mvs_otg;
 		}
 		vbus_is_on = true;
-		return;
+		return 0;
 	} else {
 		gpio_set_value_cansleep(PM8921_GPIO_PM_TO_SYS(PMIC_GPIO_OTG_EN),
 				0);
@@ -3360,6 +3399,7 @@ free_usb_5v_en:
 put_mvs_otg:
 		regulator_put(mvs_otg_switch);
 		vbus_is_on = false;
+                return 0;
 }
 
 static int phy_settings[] = {
@@ -3924,8 +3964,9 @@ static void mxt224_register_callback(void *function)
 	pr_debug("[TSP]mxt224_register_callback\n");
 }
 
-static void mxt224_read_ta_status(bool *ta_status)
+static void mxt224_read_ta_status(void *ta_status)
 {
+#if 0
 #if defined(CONFIG_USB_SWITCH_FSA9485)
 	if (set_cable_status == CABLE_TYPE_AC
 		|| set_cable_status == CABLE_TYPE_USB
@@ -3933,6 +3974,7 @@ static void mxt224_read_ta_status(bool *ta_status)
 		*ta_status = set_cable_status;
 #endif
 	pr_debug("[TSP]mxt224_ta_status = %d\n", set_cable_status);
+#endif
 }
 
 
@@ -4397,6 +4439,7 @@ static struct platform_device msm8960_device_ext_5v_vreg __devinitdata = {
 	},
 };
 
+#if 0
 static struct platform_device msm8960_device_ext_l2_vreg __devinitdata = {
 	.name	= GPIO_REGULATOR_DEV_NAME,
 	.id	= 91,
@@ -4404,6 +4447,7 @@ static struct platform_device msm8960_device_ext_l2_vreg __devinitdata = {
 		.platform_data = &msm_gpio_regulator_pdata[GPIO_VREG_ID_EXT_L2],
 	},
 };
+#endif
 
 static struct platform_device msm8960_device_ext_3p3v_vreg __devinitdata = {
 	.name	= GPIO_REGULATOR_DEV_NAME,
@@ -4723,11 +4767,12 @@ static struct platform_device *common_devices[] __initdata = {
 	&msm8960_rpm_stat_device,
 	&msm_device_tz_log,
 #if 0
-//#ifdef CONFIG_MSM_QDSS
+#ifdef CONFIG_MSM_QDSS
 	&msm_etb_device,
 	&msm_tpiu_device,
 	&msm_funnel_device,
 	&msm_etm_device,
+#endif
 #endif
 	&msm_device_dspcrashd_8960,
 	&msm8960_device_watchdog,
@@ -4760,8 +4805,8 @@ static struct platform_device *apexq_devices[] __initdata = {
 #ifdef CONFIG_SLIMBUS_MSM_CTRL
 	&msm_cpudai0,
 	&msm_cpudai1,
-        &msm8960_cpudai_slimbus_2_rx,
-        &msm8960_cpudai_slimbus_2_tx,
+    &msm8960_cpudai_slimbus_2_rx,
+    &msm8960_cpudai_slimbus_2_tx,
 #else
 	&msm_i2s_cpudai0,
 	&msm_i2s_cpudai1,
@@ -5480,7 +5525,9 @@ static void __init samsung_apexq_init(void)
 	msm8960_init_battery();
 #endif
 	msm8960_init_hsic();
+#if 0
 	msm8960_init_cam();
+#endif
 	msm8960_init_mmc();
 	if (machine_is_msm8960_liquid())
 		mxt_init_hw_liquid();

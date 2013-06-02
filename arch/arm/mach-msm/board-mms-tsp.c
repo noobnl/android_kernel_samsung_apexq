@@ -305,7 +305,7 @@ int is_melfas_vdd_on(void)
 #endif
 }
 
-#if 0
+#if !defined(CONFIG_MACH_APEXQ)
 static void melfas_register_callback(struct tsp_callbacks *cb)
 {
 	charger_callbacks = cb;

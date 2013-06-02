@@ -1,3 +1,5 @@
+#pragma GCC diagnostic ignored "-Wunused-variable"
+
 #include <linux/i2c.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>

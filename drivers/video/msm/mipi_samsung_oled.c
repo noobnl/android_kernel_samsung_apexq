@@ -30,8 +30,10 @@
 #include "mdp4_video_enhance.h"
 #endif
 
+#if defined(CONFIG_FB_MSM_MIPI_SAMSUNG_OLED_VIDEO_HD_PT)
 unsigned int Lpanel_colors = 2;
 extern void panel_load_colors(unsigned int val);
+#endif
 
 static struct mipi_samsung_driver_data msd;
 static struct pm_qos_request pm_qos_req;
@@ -86,7 +88,7 @@ static uint32 mipi_samsung_manufacture_id(struct msm_fb_data_type *mfd)
 	mipi_dsi_buf_init(tp);
 
 #ifdef CONFIG_FB_MSM_MIPI_SAMSUNG_OLED_VIDEO_WVGA_PT
-	cmd_lp = &samsung_manufacture_id1_cmd;
+	cmd_lp = samsung_manufacture_id1_cmd;
 	mipi_dsi_cmds_rx_lp(mfd, tp, rp, cmd_lp, 1);
 #else
 	cmd = &samsung_manufacture_id1_cmd;
@@ -100,7 +102,7 @@ static uint32 mipi_samsung_manufacture_id(struct msm_fb_data_type *mfd)
 	mipi_dsi_buf_init(tp);
 
 #ifdef CONFIG_FB_MSM_MIPI_SAMSUNG_OLED_VIDEO_WVGA_PT
-	cmd_lp = &samsung_manufacture_id2_cmd;
+	cmd_lp = samsung_manufacture_id2_cmd;
 	mipi_dsi_cmds_rx_lp(mfd, tp, rp, cmd_lp, 1);
 #else
 	cmd = &samsung_manufacture_id2_cmd;
@@ -114,7 +116,7 @@ static uint32 mipi_samsung_manufacture_id(struct msm_fb_data_type *mfd)
 	mipi_dsi_buf_init(rp);
 	mipi_dsi_buf_init(tp);
 #ifdef CONFIG_FB_MSM_MIPI_SAMSUNG_OLED_VIDEO_WVGA_PT
-	cmd_lp = &samsung_manufacture_id3_cmd;
+	cmd_lp = samsung_manufacture_id3_cmd;
 	mipi_dsi_cmds_rx_lp(mfd, tp, rp, cmd_lp, 1);
 #else
 	cmd = &samsung_manufacture_id3_cmd;
@@ -1044,6 +1046,10 @@ static void mipi_samsung_disp_early_suspend(struct early_suspend *h)
 	}
 #endif
 
+#if defined(CONFIG_FB_MSM_MIPI_SAMSUNG_OLED_VIDEO_WVGA_PT)
+	mipi_samsung_disp_send_cmd(mfd, PANEL_OFF, false);
+#endif
+
 #if !defined(CONFIG_FB_MSM_MIPI_SAMSUNG_OLED_VIDEO_HD_PT) && \
 	!defined(CONFIG_FB_MSM_MIPI_MAGNA_OLED_VIDEO_QHD_PT) && \
 	!defined(CONFIG_FB_MSM_MIPI_MAGNA_OLED_VIDEO_WVGA_PT)
@@ -1346,6 +1352,7 @@ static DEVICE_ATTR(auto_brightness, S_IRUGO | S_IWUSR | S_IWGRP,
 
 #endif
 
+#if defined(CONFIG_FB_MSM_MIPI_SAMSUNG_OLED_VIDEO_HD_PT)
 static ssize_t panel_colors_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
 	return sprintf(buf, "%d\n", Lpanel_colors);
@@ -1374,6 +1381,7 @@ static ssize_t panel_colors_store(struct device *dev, struct device_attribute *a
 
 static DEVICE_ATTR(panel_colors, S_IRUGO | S_IWUSR | S_IWGRP,
 			panel_colors_show, panel_colors_store);
+#endif
 
 #ifdef READ_REGISTER_ESD
 #define ID_E5H_IDLE 0x80
@@ -1416,7 +1424,7 @@ static void read_error_register(struct msm_fb_data_type *mfd)
 	mipi_dsi_buf_init(tp);
 
 #if defined(CONFIG_FB_MSM_MIPI_SAMSUNG_OLED_VIDEO_WVGA_PT)
-	cmd_lp = &error_id2_cmd;
+	cmd_lp = error_id2_cmd;
 	mipi_dsi_cmds_rx_lp(mfd, tp, rp, cmd_lp, 1);
 	error_buf[0] = *rp->data;
 	mipi_dsi_cmds_rx_lp(mfd, tp, rp, cmd_lp, 1);
@@ -1461,7 +1469,7 @@ static void esd_test_work_func(struct work_struct *work)
 		if ((ID_E5H_IDLE_2 != error_buf[0]) && \
 			(error_buf[0] != ID_E5H_IDLE_3)) {
 			pr_info("%s: E5H=%x 0AH=%x\n", __func__,
-				error_buf[0], error_buf[2]);
+				error_buf[0], error_buf[1]);
 			esd_execute();
 
 			esd_cnt++;
@@ -1561,8 +1569,10 @@ static int __devinit mipi_samsung_disp_probe(struct platform_device *pdev)
 				dev_attr_power_reduce.attr.name);
 	}
 
+#if defined(CONFIG_FB_MSM_MIPI_SAMSUNG_OLED_VIDEO_HD_PT)
 	ret = sysfs_create_file(&lcd_device->dev.kobj,
 					&dev_attr_panel_colors.attr);
+#endif
 
 #if defined(CONFIG_BACKLIGHT_CLASS_DEVICE)
 	bd = backlight_device_register("panel", &lcd_device->dev,
