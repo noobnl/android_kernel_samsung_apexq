@@ -2465,26 +2465,26 @@ static struct resource resources_qup_spi_gsbi11[] = {
 	/*test: Qualcomm, DMA SPI, end */
 	{
 		.name   = "spi_clk",
-		.start  = -1,
-		.end    = -1,
+		.start  = GPIO_CAM_SPI_SCLK,
+		.end    = GPIO_CAM_SPI_SCLK,
 		.flags  = IORESOURCE_IO,
 	},
 	{
 		.name   = "spi_miso",
-		.start  = -1,
-		.end    = -1,
+		.start  = GPIO_CAM_SPI_MISO,
+		.end    = GPIO_CAM_SPI_MISO,
 		.flags  = IORESOURCE_IO,
 	},
 	{
 		.name   = "spi_mosi",
-		.start  = -1,
-		.end    = -1,
+		.start  = GPIO_CAM_SPI_MOSI,
+		.end    = GPIO_CAM_SPI_MOSI,
 		.flags  = IORESOURCE_IO,
 	},
 	{
 		.name   = "spi_cs",
-		.start  = -1,
-		.end    = -1,
+		.start  = GPIO_CAM_SPI_SSN,
+		.end    = GPIO_CAM_SPI_SSN,
 		.flags  = IORESOURCE_IO,
 	},
 #ifdef CONFIG_VP_A2220

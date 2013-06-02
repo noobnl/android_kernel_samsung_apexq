@@ -11,6 +11,8 @@
  *
  */
 
+#if 0
+
 #include <asm/mach-types.h>
 #include <linux/module.h>
 #include <linux/gpio.h>
@@ -3570,5 +3572,6 @@ int __init msm_get_cam_resources(struct msm_camera_sensor_info *s_info)
 	return 0;
 }
 
+#endif
 #endif
 #endif

@@ -13,6 +13,8 @@
  *
  */
 
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/input.h>
@@ -97,7 +99,7 @@
 
 #define MAX_USING_FINGER_NUM 10
 
-static struct object_t {
+struct object_t {
 	u8 object_type;
 	u16 i2c_address;
 	u8 size;
@@ -105,7 +107,7 @@ static struct object_t {
 	u8 num_report_ids;
 } __packed;
 
-static struct finger_info {
+struct finger_info {
 	s16 x;
 	s16 y;
 	s16 z;
@@ -114,11 +116,11 @@ static struct finger_info {
 	int16_t component;
 };
 
-static struct mxt224_data {
+struct mxt224_data {
 	struct i2c_client *client;
 	struct input_dev *input_dev;
 	struct early_suspend early_suspend;
-#if TOUCH_BOOSTER
+#if defined(TOUCH_BOOSTER)
 	struct delayed_work work_dvfs_off;
 	struct delayed_work	work_dvfs_chg;
 	bool	dvfs_lock_status;
@@ -201,7 +203,7 @@ struct t48_median_config_t {
 } __packed;
 static struct t48_median_config_t noise_median; /* 110927 gumi noise */
 
-#if TOUCH_BOOSTER
+#if defined(TOUCH_BOOSTER)
 static bool dvfs_lock_status;
 static bool press_status;
 #endif
@@ -214,7 +216,7 @@ static unsigned int gIgnoreReport_flag;
 static unsigned int gForceCalibration_flag;
 static unsigned int gMedianErrExcuted;
 
-#if TOUCH_BOOSTER
+#if defined(TOUCH_BOOSTER)
 static void change_dvfs_lock(struct work_struct *work)
 {
 	struct mxt224_data *data = container_of(work,
@@ -325,7 +327,7 @@ static int write_mem(struct mxt224_data *data, u16 reg, u8 len, const u8 *buf)
 static int mxt224_reset(struct mxt224_data *data)
 {
 	u8 buf = 1u;
-#if TOUCH_BOOSTER
+#if defined(TOUCH_BOOSTER)
 	set_dvfs_lock(data, 2);
 	pr_info("[TSP] dvfs_lock free.\n");
 #endif
@@ -506,11 +508,11 @@ static void mxt224_ta_probe(int ta_status)
 	int ret;
 	u8 value;
 	u8 val = 0;
-	u16 size;
+//	u16 size;
 	u8 active_depth;
 	u8 charge_time;
 
-	struct mxt224_data *data = copy_data;
+//	struct mxt224_data *data = copy_data;
 	printk(KERN_ERR "[TSP] mxt224 probe number: %d\n",
 			tsp_probe_num);
 	if (!mxt224_enabled) {
@@ -970,7 +972,7 @@ err:
 
 static void report_input_data(struct mxt224_data *data)
 {
-	int i, ret;
+	int i /*, ret*/;
 	int count = 0;
 	struct mxt224_platform_data *pdata = data->client->dev.platform_data;
 
@@ -1027,7 +1029,7 @@ static void report_input_data(struct mxt224_data *data)
 	touch_is_pressed = count ? 1 : 0;
 	data->finger_mask = 0;
 
-#if TOUCH_BOOSTER
+#if defined(TOUCH_BOOSTER)
 	set_dvfs_lock(data, !!touch_is_pressed);
 #endif
 }
@@ -1422,7 +1424,7 @@ static int mxt224_internal_suspend(struct mxt224_data *data)
 	}
 	report_input_data(data);
 
-#if TOUCH_BOOSTER
+#if defined(TOUCH_BOOSTER)
 	set_dvfs_lock(data, 2);
 	pr_info("[TSP] dvfs_lock free.\n");
 #endif
@@ -2721,7 +2723,7 @@ static int mxt224_probe(struct i2c_client *client,
 		goto err_reg_dev;
 	}
 
-#if TOUCH_BOOSTER
+#if defined(TOUCH_BOOSTER)
 	mutex_init(&data->dvfs_lock);
 	INIT_DELAYED_WORK(&data->work_dvfs_off, set_dvfs_off);
 	INIT_DELAYED_WORK(&data->work_dvfs_chg, change_dvfs_lock);
@@ -2996,7 +2998,7 @@ static int mxt224_probe(struct i2c_client *client,
 err_irq:
 	kfree(data->objects);
 err_init_drv:
-#if TOUCH_BOOSTER
+#if defined(TOUCH_BOOSTER)
 	mutex_destroy(&data->dvfs_lock);
 #endif
 	gpio_free(data->gpio_read_done);
