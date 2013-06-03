@@ -1473,6 +1473,7 @@ static struct snd_soc_ops msm8960_auxpcm_be_ops = {
 
 static struct snd_soc_dai_link *msm8960_dai_list;
 
+#if !defined(CONFIG_SLIMBUS_MSM_CTRL)
 static struct snd_soc_dai_link msm8960_i2s_be_dai[] = {
 	{
 		.name = LPASS_BE_PRI_I2S_RX,
@@ -1500,6 +1501,7 @@ static struct snd_soc_dai_link msm8960_i2s_be_dai[] = {
 		.ops = &msm8960_i2s_be_ops,
 	},
 };
+#else
 static struct snd_soc_dai_link msm8960_slimbus_be_dai[] = {
 	{
 		.name = LPASS_BE_SLIMBUS_0_RX,
@@ -1527,6 +1529,7 @@ static struct snd_soc_dai_link msm8960_slimbus_be_dai[] = {
 		.ops = &msm8960_be_ops,
 	},
 };
+#endif
 
 /* Digital audio interface glue - connects codec <---> CPU */
 static struct snd_soc_dai_link msm8960_dai[] = {
