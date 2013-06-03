@@ -977,6 +977,7 @@ static int msm8960_audrx_init(struct snd_soc_pcm_runtime *rtd)
 	return 0;
 }
 
+#if 0
 static struct snd_soc_dsp_link lpa_fe_media = {
 	.playback = true,
 	.trigger = {
@@ -1011,6 +1012,7 @@ static struct snd_soc_dsp_link int_fm_hl_media = {
 		SND_SOC_DSP_TRIGGER_POST
 	},
 };
+#endif
 
 static int msm8960_i2s_rx_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
 			struct snd_pcm_hw_params *params)
