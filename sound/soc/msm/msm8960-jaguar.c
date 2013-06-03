@@ -1464,11 +1464,13 @@ static struct snd_soc_ops msm8960_be_ops = {
 	.shutdown = msm8960_shutdown,
 };
 
+#if !defined(CONFIG_SLIMBUS_MSM_CTRL)
 static struct snd_soc_ops msm8960_i2s_be_ops = {
 	.startup = msm8960_i2s_startup,
 	.shutdown = msm8960_i2s_shutdown,
 	.hw_params = msm8660_i2s_hw_params,
 };
+#endif
 
 static struct snd_soc_ops msm8960_auxpcm_be_ops = {
 	.startup = msm8960_auxpcm_startup,
