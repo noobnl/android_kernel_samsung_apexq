@@ -1016,6 +1016,7 @@ static struct snd_soc_dsp_link int_fm_hl_media = {
 };
 #endif
 
+#if !defined(CONFIG_SLIMBUS_MSM_CTRL)
 static int msm8960_i2s_rx_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
 			struct snd_pcm_hw_params *params)
 {
@@ -1048,7 +1049,7 @@ static int msm8960_i2s_tx_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
 
 	return 0;
 }
-
+#else
 static int msm8960_slim_0_rx_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
 			struct snd_pcm_hw_params *params)
 {
@@ -1084,6 +1085,7 @@ static int msm8960_slim_0_tx_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
 			__func__, channels->min, rate->min);
 	return 0;
 }
+#endif
 
 static int msm8960_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
 			struct snd_pcm_hw_params *params)
