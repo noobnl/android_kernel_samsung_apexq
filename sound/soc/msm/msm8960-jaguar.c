@@ -805,6 +805,7 @@ static void *def_tabla_mbhc_cal(void)
 	return tabla_cal;
 }
 
+#if defined(CONFIG_SLIMBUS_MSM_CTRL)
 static int msm8960_i2s_audrx_init(struct snd_soc_pcm_runtime *rtd)
 {
 	int err;
@@ -869,6 +870,7 @@ static int msm8960_i2s_audrx_init(struct snd_soc_pcm_runtime *rtd)
 
 	return 0;
 }
+#endif
 
 static int msm8960_audrx_init(struct snd_soc_pcm_runtime *rtd)
 {
