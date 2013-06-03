@@ -1890,8 +1890,8 @@ static struct platform_device *msm8960_snd_device;
 
 static int msm8960_configure_headset_mic_gpios(void)
 {
-	printk(KERN_INFO "%s: start", __func__);
 	int ret;
+	printk(KERN_INFO "%s: start", __func__);
 	struct pm_gpio param = {
 		.direction      = PM_GPIO_DIR_OUT,
 		.output_buffer  = PM_GPIO_OUT_BUF_CMOS,
