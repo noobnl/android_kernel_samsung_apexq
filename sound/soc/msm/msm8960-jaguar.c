@@ -126,10 +126,13 @@ static struct tabla_mbhc_config mbhc_cfg = {
 static int msm8960_i2s_rx_ch = 1;
 static int msm8960_i2s_tx_ch = 1;
 static int msm8960_i2s_spk_control;
+
+#if !defined(CONFIG_SLIMBUS_MSM_CTRL)
 static struct clk *rx_osr_clk;
 static struct clk *rx_bit_clk;
 static struct clk *tx_osr_clk;
 static struct clk *tx_bit_clk;
+#endif
 
 static struct mutex cdc_mclk_mutex;
 
@@ -1230,7 +1233,11 @@ int msm8960_aux_pcm_free_gpios(void)
 	gpio_free(GPIO_AUX_PCM_CLK);
 
 	return 0;
+
+
 }
+
+#if !defined(CONFIG_SLIMBUS_MSM_CTRL)
 static int msm8960_cdc_i2s_rx_free_gpios(void)
 {
 	gpio_free(GPIO_SPKR_I2S_RX_SCK);
@@ -1266,7 +1273,6 @@ static int msm8660_i2s_hw_params(struct snd_pcm_substream *substream,
 	}
 	return 1;
 }
-
 
 static void msm8960_i2s_shutdown(struct snd_pcm_substream *substream)
 {
@@ -1425,6 +1431,7 @@ static int msm8960_i2s_startup(struct snd_pcm_substream *substream)
 	}
 	return ret;
 }
+#endif
 
 static int msm8960_startup(struct snd_pcm_substream *substream)
 {
