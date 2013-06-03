@@ -1891,7 +1891,6 @@ static struct platform_device *msm8960_snd_device;
 static int msm8960_configure_headset_mic_gpios(void)
 {
 	int ret;
-	printk(KERN_INFO "%s: start", __func__);
 	struct pm_gpio param = {
 		.direction      = PM_GPIO_DIR_OUT,
 		.output_buffer  = PM_GPIO_OUT_BUF_CMOS,
@@ -1901,6 +1900,7 @@ static int msm8960_configure_headset_mic_gpios(void)
 		.out_strength   = PM_GPIO_STRENGTH_MED,
 		.function       = PM_GPIO_FUNC_NORMAL,
 	};
+	printk(KERN_INFO "%s: start", __func__);
 
 	ret = gpio_request(PM8921_GPIO_PM_TO_SYS(23), "AV_SWITCH");
 	if (ret) {
