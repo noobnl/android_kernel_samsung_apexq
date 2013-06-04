@@ -100,6 +100,7 @@ static struct gpiomux_setting nc_cfg = {
 	.pull = GPIOMUX_PULL_DOWN,
 };
 
+#if 0
 static struct gpiomux_setting audio_auxpcm[] = {
 	/* Suspended state */
 	{
@@ -114,6 +115,7 @@ static struct gpiomux_setting audio_auxpcm[] = {
 		.pull = GPIOMUX_PULL_NONE,
 	},
 };
+#endif
 
 #if defined(CONFIG_KS8851) || defined(CONFIG_KS8851_MODULE)
 static struct gpiomux_setting gpio_eth_config = {
@@ -645,6 +647,7 @@ static struct msm_gpiomux_config msm8960_audio_i2s_tx_codec_configs[] = {
 };
 #endif
 
+#if 0
 static struct msm_gpiomux_config msm8960_audio_auxpcm_configs[] __initdata = {
 	{
 		.gpio = 63,
@@ -675,6 +678,7 @@ static struct msm_gpiomux_config msm8960_audio_auxpcm_configs[] __initdata = {
 		},
 	},
 };
+#endif
 
 static struct msm_gpiomux_config wcnss_5wire_interface[] = {
 	{
@@ -986,14 +990,20 @@ int __init msm8960_init_gpiomux(void)
 	msm_gpiomux_install(wcnss_5wire_interface,
 			ARRAY_SIZE(wcnss_5wire_interface));
 
+#ifndef CONFIG_SLIMBUS_MSM_CTRL
+	msm_gpiomux_install(msm8960_audio_i2s_rx_codec_configs,
+			ARRAY_SIZE(msm8960_audio_i2s_tx_codec_configs));
+
+	msm_gpiomux_install(msm8960_audio_i2s_tx_codec_configs,
+			ARRAY_SIZE(msm8960_audio_i2s_tx_codec_configs));
+#else
 	msm_gpiomux_install(msm8960_slimbus_config,
 			ARRAY_SIZE(msm8960_slimbus_config));
 
 	msm_gpiomux_install(msm8960_audio_codec_configs,
 			ARRAY_SIZE(msm8960_audio_codec_configs));
 
-	msm_gpiomux_install(msm8960_audio_auxpcm_configs,
-			ARRAY_SIZE(msm8960_audio_auxpcm_configs));
+#endif
 
 	msm_gpiomux_install(nc_configs,
 			ARRAY_SIZE(nc_configs));

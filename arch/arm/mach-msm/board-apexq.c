@@ -4364,7 +4364,7 @@ static struct msm_rpm_platform_data msm_rpm_data = {
 	.msm_apps_ipc_rpm_val = 4,
 };
 #endif
-
+#if 0
 static struct ks8851_pdata spi_eth_pdata = {
 	.irq_gpio = KS8851_IRQ_GPIO,
 	.rst_gpio = KS8851_RST_GPIO,
@@ -4388,6 +4388,7 @@ static struct spi_board_info spi_board_info[] __initdata = {
 		.mode                   = SPI_MODE_0,
 	},
 };
+#endif
 
 static struct platform_device msm_device_saw_core0 = {
 	.name          = "saw-regulator",
@@ -4790,8 +4791,8 @@ static struct platform_device *common_devices[] __initdata = {
 
 static struct platform_device *apexq_devices[] __initdata = {
 	&msm_8960_q6_lpass,
-	&msm_8960_q6_mss_fw,
 	&msm_8960_q6_mss_sw,
+	&msm_8960_q6_mss_fw,
 	&msm_8960_riva,
 	&msm_pil_tzapps,
 	&msm_pil_vidc,
@@ -4805,8 +4806,6 @@ static struct platform_device *apexq_devices[] __initdata = {
 #ifdef CONFIG_SLIMBUS_MSM_CTRL
 	&msm_cpudai0,
 	&msm_cpudai1,
-    &msm8960_cpudai_slimbus_2_rx,
-    &msm8960_cpudai_slimbus_2_tx,
 #else
 	&msm_i2s_cpudai0,
 	&msm_i2s_cpudai1,
@@ -5489,7 +5488,9 @@ static void __init samsung_apexq_init(void)
 #endif
 	msm_device_hsic_host.dev.platform_data = &msm_hsic_pdata;
 	msm8960_init_gpiomux();
+#if 0
 	spi_register_board_info(spi_board_info, ARRAY_SIZE(spi_board_info));
+#endif
 	msm8960_init_pmic();
 #if defined(CONFIG_KEYBOARD_PMIC8XXX)
 	if (system_rev < BOARD_REV01)
