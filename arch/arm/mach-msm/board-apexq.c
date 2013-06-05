@@ -175,8 +175,11 @@
 #endif
 
 extern unsigned int system_rev;
-#ifdef CONFIG_TOUCHSCREEN_MMS144
+#ifdef CONFIG_TOUCHSCREEN_MMS136
 struct tsp_callbacks *charger_callbacks;
+struct tsp_callbacks {
+	void (*inform_charger)(struct tsp_callbacks *tsp_cb, bool mode);
+};
 #endif
 
 #ifdef CONFIG_SEC_DEBUG
@@ -313,7 +316,7 @@ static struct msm_gpiomux_config msm8960_sec_ts_configs[] = {
 #define HOLE_SIZE	0x20000
 #define MSM_CONTIG_MEM_SIZE  0x65000
 #ifdef CONFIG_MSM_IOMMU
-#define MSM_ION_MM_SIZE            0x3800000
+#define MSM_ION_MM_SIZE            0x6000000
 #define MSM_ION_SF_SIZE            0x0
 #define MSM_ION_QSECOM_SIZE        0x780000 /* (7.5MB) */
 #ifdef CONFIG_CMA
@@ -418,7 +421,6 @@ static struct platform_device msm8960_android_pmem_adsp_device = {
 	.id = 2,
 	.dev = { .platform_data = &android_pmem_adsp_pdata },
 };
-#endif
 
 static struct android_pmem_platform_data android_pmem_audio_pdata = {
 	.name = "pmem_audio",
@@ -433,6 +435,7 @@ static struct platform_device msm8960_android_pmem_audio_device = {
 	.dev = { .platform_data = &android_pmem_audio_pdata },
 };
 #endif /*CONFIG_MSM_MULTIMEDIA_USE_ION*/
+#endif /*CONFIG_ANDROID_PMEM*/
 
 struct fmem_platform_data msm8960_fmem_pdata = {
 };
@@ -468,38 +471,34 @@ static struct memtype_reserve msm8960_reserve_table[] __initdata = {
 	},
 };
 
+#if defined(CONFIG_MSM_RTB)
+static struct msm_rtb_platform_data msm_rtb_pdata = {
+	.size = SZ_1M,
+};
+
+static int __init msm_rtb_set_buffer_size(char *p)
+{
+	int s;
+
+	s = memparse(p, NULL);
+	msm_rtb_pdata.size = ALIGN(s, SZ_4K);
+	return 0;
+}
+early_param("msm_rtb_size", msm_rtb_set_buffer_size);
+
+static struct platform_device msm_rtb_device = {
+	.name           = "msm_rtb",
+	.id             = -1,
+	.dev            = {
+		.platform_data = &msm_rtb_pdata,
+	},
+};
+#endif
+
 static void __init reserve_rtb_memory(void)
 {
 #if defined(CONFIG_MSM_RTB)
-	msm8960_reserve_table[MEMTYPE_EBI1].size += msm8960_rtb_pdata.size;
-#endif
-}
-
-static void __init size_pmem_devices(void)
-{
-#ifdef CONFIG_ANDROID_PMEM
-#ifndef CONFIG_MSM_MULTIMEDIA_USE_ION
-	android_pmem_adsp_pdata.size = pmem_adsp_size;
-	android_pmem_pdata.size = pmem_size;
-#endif
-	android_pmem_audio_pdata.size = MSM_PMEM_AUDIO_SIZE;
-#endif
-}
-
-static void __init reserve_memory_for(struct android_pmem_platform_data *p)
-{
-	msm8960_reserve_table[p->memory_type].size += p->size;
-}
-
-static void __init reserve_pmem_memory(void)
-{
-#ifdef CONFIG_ANDROID_PMEM
-#ifndef CONFIG_MSM_MULTIMEDIA_USE_ION
-	reserve_memory_for(&android_pmem_adsp_pdata);
-	reserve_memory_for(&android_pmem_pdata);
-#endif
-	reserve_memory_for(&android_pmem_audio_pdata);
-	msm8960_reserve_table[MEMTYPE_EBI1].size += msm_contig_mem_size;
+	msm8960_reserve_table[MEMTYPE_EBI1].size += msm_rtb_pdata.size;
 #endif
 }
 
@@ -679,7 +678,6 @@ static void __init adjust_mem_for_liquid(void)
 {
 	unsigned int i;
 
-	if (!pmem_param_set) {
 		if (machine_is_msm8960_liquid())
 			msm_ion_sf_size = MSM_LIQUID_ION_SF_SIZE;
 
@@ -699,7 +697,6 @@ static void __init adjust_mem_for_liquid(void)
 				}
 			}
 		}
-	}
 }
 
 static void __init reserve_mem_for_ion(enum ion_memory_types mem_type,
@@ -995,12 +992,11 @@ static void reserve_cache_dump_memory(void)
 
 static void __init msm8960_calculate_reserve_sizes(void)
 {
-	size_pmem_devices();
-	reserve_pmem_memory();
 	reserve_ion_memory();
 	reserve_mdp_memory();
 	reserve_rtb_memory();
 	reserve_cache_dump_memory();
+	msm8960_reserve_table[MEMTYPE_EBI1].size += msm_contig_mem_size;
 }
 
 static struct reserve_info msm8960_reserve_info __initdata = {
@@ -1859,8 +1855,6 @@ static int max17040_low_batt_cb(void)
 	value.intval = POWER_SUPPLY_CAPACITY_LEVEL_CRITICAL;
 	return psy->set_property(psy, POWER_SUPPLY_PROP_CAPACITY_LEVEL, &value);
 #else
-	pr_err("%s: Low battery alert\n", __func__);
-
 	return 0;
 #endif
 }
@@ -2261,7 +2255,6 @@ static void mpl_init(void)
 		mpu_data = mpu_data_01;
 	else if (system_rev < BOARD_REV01)
 		mpu_data = mpu_data_00;
-       mpu_data.reset = gpio_rev(GPIO_MAG_RST);
 #endif
 }
 #endif
@@ -2725,7 +2718,7 @@ static void __init qwerty_keyboard_init(void)
  * microphone sensitivity purpose.
  */
 #ifndef CONFIG_SLIMBUS_MSM_CTRL
-static struct tabla_pdata tabla_i2c_platform_data = {
+static struct wcd9xxx_pdata wcd9xxx_i2c_platform_data = {
 	.irq = MSM_GPIO_TO_INT(GPIO_CODEC_MAD_INTR),
 	.irq_base = TABLA_INTERRUPT_BASE,
 	.num_irqs = NR_TABLA_IRQS,
@@ -2733,14 +2726,53 @@ static struct tabla_pdata tabla_i2c_platform_data = {
 	.micbias = {
 		.ldoh_v = TABLA_LDOH_2P85_V,
 		.cfilt1_mv = 1800,
-		.cfilt2_mv = 1800,
+		.cfilt2_mv = 2700,
 		.cfilt3_mv = 1800,
 		.bias1_cfilt_sel = TABLA_CFILT1_SEL,
 		.bias2_cfilt_sel = TABLA_CFILT2_SEL,
 		.bias3_cfilt_sel = TABLA_CFILT3_SEL,
 		.bias4_cfilt_sel = TABLA_CFILT3_SEL,
-	}
+	},
+	.regulator = {
+	{
+		.name = "CDC_VDD_CP",
+		.min_uV = 1800000,
+		.max_uV = 1800000,
+		.optimum_uA = WCD9XXX_CDC_VDDA_CP_CUR_MAX,
+	},
+	{
+		.name = "CDC_VDDA_RX",
+		.min_uV = 1800000,
+		.max_uV = 1800000,
+		.optimum_uA = WCD9XXX_CDC_VDDA_RX_CUR_MAX,
+	},
+	{
+		.name = "CDC_VDDA_TX",
+		.min_uV = 1800000,
+		.max_uV = 1800000,
+		.optimum_uA = WCD9XXX_CDC_VDDA_TX_CUR_MAX,
+	},
+	{
+		.name = "VDDIO_CDC",
+		.min_uV = 1800000,
+		.max_uV = 1800000,
+		.optimum_uA = WCD9XXX_VDDIO_CDC_CUR_MAX,
+	},
+	{
+		.name = "VDDD_CDC_D",
+		.min_uV = 1225000,
+		.max_uV = 1225000,
+		.optimum_uA = WCD9XXX_VDDD_CDC_D_CUR_MAX,
+	},
+	{
+		.name = "CDC_VDDA_A_1P2V",
+		.min_uV = 1225000,
+		.max_uV = 1225000,
+		.optimum_uA = WCD9XXX_VDDD_CDC_A_CUR_MAX,
+	},
+	},
 };
+
 #endif
 static struct wcd9xxx_pdata tabla_platform_data = {
 	.slimbus_slave_device = {
@@ -4732,10 +4764,10 @@ static struct platform_device *common_devices[] __initdata = {
 	&msm8960_fmem_device,
 #ifdef CONFIG_ANDROID_PMEM
 #ifndef CONFIG_MSM_MULTIMEDIA_USE_ION
-	&msm8960_android_pmem_device,
-	&msm8960_android_pmem_adsp_device,
+        &msm8960_android_pmem_device,
+        &msm8960_android_pmem_adsp_device,
+        &msm8960_android_pmem_audio_device,
 #endif
-	&msm8960_android_pmem_audio_device,
 #endif
 #ifdef CONFIG_KEYBOARD_GPIO
 	&msm8960_gpio_keys_device,
