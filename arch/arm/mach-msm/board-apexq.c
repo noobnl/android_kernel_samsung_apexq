@@ -2723,7 +2723,7 @@ static void __init qwerty_keyboard_init(void)
  * microphone sensitivity purpose.
  */
 #ifndef CONFIG_SLIMBUS_MSM_CTRL
-static struct wcd9xxx_pdata wcd9xxx_i2c_platform_data = {
+static struct wcd9xxx_pdata tabla_i2c_platform_data = {
 	.irq = MSM_GPIO_TO_INT(GPIO_CODEC_MAD_INTR),
 	.irq_base = TABLA_INTERRUPT_BASE,
 	.num_irqs = NR_TABLA_IRQS,
@@ -2777,8 +2777,7 @@ static struct wcd9xxx_pdata wcd9xxx_i2c_platform_data = {
 	},
 	},
 };
-
-#endif
+#else
 static struct wcd9xxx_pdata tabla_platform_data = {
 	.slimbus_slave_device = {
 		.name = "tabla-slave",
@@ -2912,7 +2911,6 @@ static struct slim_device msm_slim_tabla20 = {
 		.platform_data = &tabla20_platform_data,
 	},
 };
-#endif
 
 static struct slim_boardinfo msm_slim_devices[] = {
 #ifdef CONFIG_WCD9310_CODEC
@@ -2927,6 +2925,8 @@ static struct slim_boardinfo msm_slim_devices[] = {
 #endif
 	/* add more slimbus slaves as needed */
 };
+#endif
+#endif
 
 #define MSM_WCNSS_PHYS	0x03000000
 #define MSM_WCNSS_SIZE	0x280000
@@ -5613,9 +5613,10 @@ static void __init samsung_apexq_init(void)
 		secjack_gpio_init();
 	}
 #endif
-
+#if defined(CONFIG_SLIMBUS_MSM_CTRL)
         slim_register_board_info(msm_slim_devices,
                 ARRAY_SIZE(msm_slim_devices));
+#endif
 	msm8960_init_dsps();
 #if 0
 	msm_pm_set_rpm_wakeup_irq(RPM_APCC_CPU0_WAKE_UP_IRQ);
