@@ -1388,7 +1388,7 @@ static int msm8960_i2s_startup(struct snd_pcm_substream *substream)
 		}
 		/* Master clock OSR 256 */
 		clk_set_rate(tx_osr_clk, 1536000);
-		ret = clk_enable(tx_osr_clk);
+		ret = clk_prepare_enable(tx_osr_clk);
 		if (ret != 0) {
 			pr_debug("Unable to enable i2s_mic_osr_clk\n");
 			clk_put(tx_osr_clk);
@@ -1402,7 +1402,7 @@ static int msm8960_i2s_startup(struct snd_pcm_substream *substream)
 			return PTR_ERR(tx_bit_clk);
 		}
 		clk_set_rate(tx_bit_clk, 8);
-		ret = clk_enable(tx_bit_clk);
+		ret = clk_prepare_enable(tx_bit_clk);
 		if (ret != 0) {
 			pr_debug("Unable to enable i2s_mic_bit_clk\n");
 			clk_put(tx_bit_clk);
