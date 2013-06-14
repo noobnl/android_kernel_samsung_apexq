@@ -182,11 +182,6 @@ struct tsp_callbacks {
 };
 #endif
 
-static struct platform_device msm_fm_platform_init = {
-	.name = "iris_fm",
-	.id   = -1,
-};
-
 #ifdef CONFIG_SEC_DEBUG
 #include <mach/sec_debug.h>
 #endif
@@ -311,15 +306,14 @@ static struct msm_gpiomux_config msm8960_sec_ts_configs[] = {
 };
 #endif
 
-#define MSM_PMEM_ADSP_SIZE         0x4E00000 /* 78 Mbytes */
-#define MSM_PMEM_AUDIO_SIZE        0x4CF000
+#define MSM_PMEM_ADSP_SIZE         0x5100000 /* 81 Mbytes */
+#define MSM_PMEM_AUDIO_SIZE        0x4CF000 /* 5 Mbytes */
 #define MSM_PMEM_SIZE 0x2800000 /* 40 Mbytes */
-#define MSM_LIQUID_PMEM_SIZE 0x4000000 /* 64 Mbytes */
-#define MSM_HDMI_PRIM_PMEM_SIZE 0x4000000 /* 64 Mbytes */
 
 #ifdef CONFIG_MSM_MULTIMEDIA_USE_ION
-#define HOLE_SIZE	0x20000
-#define MSM_CONTIG_MEM_SIZE  0x65000
+#define HOLE_SIZE 0x20000
+#define MSM_ION_MFC_META_SIZE  0x40000 /* 256 Kbytes */
+#define MSM_CONTIG_MEM_SIZE 0x65000
 #ifdef CONFIG_MSM_IOMMU
 #define MSM_ION_MM_SIZE            0x3800000
 #define MSM_ION_SF_SIZE            0x0
@@ -340,12 +334,8 @@ static struct msm_gpiomux_config msm8960_sec_ts_configs[] = {
 #endif
 #endif
 #define MSM_ION_MM_FW_SIZE	(0x200000 - HOLE_SIZE) /* 128kb */
-#define MSM_ION_MFC_SIZE	SZ_8K
+#define MSM_ION_MFC_SIZE (SZ_8K + MSM_ION_MFC_META_SIZE)
 #define MSM_ION_AUDIO_SIZE	MSM_PMEM_AUDIO_SIZE
-
-#define MSM_LIQUID_ION_MM_SIZE (MSM_ION_MM_SIZE + 0x600000)
-#define MSM_LIQUID_ION_SF_SIZE MSM_LIQUID_PMEM_SIZE
-#define MSM_HDMI_PRIM_ION_SF_SIZE MSM_HDMI_PRIM_PMEM_SIZE
 
 #define MSM_MM_FW_SIZE      (0x200000 - HOLE_SIZE) /* 2mb -128kb*/
 #define MSM8960_FIXED_AREA_START (0xa0000000 - (MSM_ION_MM_FW_SIZE + \
@@ -679,31 +669,6 @@ struct platform_device msm8960_fmem_device = {
 	.dev = { .platform_data = &msm8960_fmem_pdata },
 };
 
-static void __init adjust_mem_for_liquid(void)
-{
-	unsigned int i;
-
-		if (machine_is_msm8960_liquid())
-			msm_ion_sf_size = MSM_LIQUID_ION_SF_SIZE;
-
-		if (msm8960_hdmi_as_primary_selected())
-			msm_ion_sf_size = MSM_HDMI_PRIM_ION_SF_SIZE;
-
-		if (machine_is_msm8960_liquid() ||
-			msm8960_hdmi_as_primary_selected()) {
-			for (i = 0; i < msm8960_ion_pdata.nr; i++) {
-				if (msm8960_ion_pdata.heaps[i].id ==
-							ION_SF_HEAP_ID) {
-					msm8960_ion_pdata.heaps[i].size =
-						msm_ion_sf_size;
-					pr_debug("msm_ion_sf_size 0x%x\n",
-						msm_ion_sf_size);
-					break;
-				}
-			}
-		}
-}
-
 static void __init reserve_mem_for_ion(enum ion_memory_types mem_type,
 				      unsigned long size)
 {
@@ -754,7 +719,6 @@ static void __init reserve_ion_memory(void)
 	unsigned int middle_use_cma = 0;
 	unsigned int high_use_cma = 0;
 
-	adjust_mem_for_liquid();
 	fixed_low_size = 0;
 	fixed_middle_size = 0;
 	fixed_high_size = 0;
@@ -4832,6 +4796,7 @@ static struct platform_device *apexq_devices[] __initdata = {
 	&msm_8960_q6_mss_fw,
 	&msm_8960_riva,
 	&msm_pil_tzapps,
+	&msm_pil_dsps,
 	&msm_pil_vidc,
 	&msm8960_device_otg,
 	&msm8960_device_gadget_peripheral,
@@ -4839,6 +4804,7 @@ static struct platform_device *apexq_devices[] __initdata = {
 	&android_usb_device,
 	&msm_pcm,
 	&msm_multi_ch_pcm,
+	&msm_lowlatency_pcm,
 	&msm_pcm_routing,
 #ifdef CONFIG_SLIMBUS_MSM_CTRL
 	&msm_cpudai0,
@@ -4897,9 +4863,6 @@ static struct platform_device *apexq_devices[] __initdata = {
 	&msm_bus_sys_fpb,
 	&msm_bus_cpss_fpb,
 	&pn544_i2c_gpio_device,
-#ifdef CONFIG_VP_A2220
-	&a2220_i2c_gpio_device,
-#endif
 #ifdef CONFIG_VIBETONZ
 	&vibetonz_device,
 #endif /* CONFIG_VIBETONZ */
