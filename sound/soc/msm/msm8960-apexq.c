@@ -342,7 +342,7 @@ static int msm8960_enable_codec_ext_clk(struct snd_soc_codec *codec, int enable,
 		clk_users++;
 		pr_debug("%s: clk_users = %d\n", __func__, clk_users);
 		if (clk_users == 1) {
-			codec_clk = clk_get(NULL, "i2s_spkr_osr_clk")
+			codec_clk = clk_get(NULL, "i2s_spkr_osr_clk");
 			if (codec_clk) {
 				clk_set_rate(codec_clk, TABLA_EXT_CLK_RATE);
 				clk_prepare_enable(codec_clk);
@@ -807,7 +807,7 @@ static int msm8960_audrx_init(struct snd_soc_pcm_runtime *rtd)
 	int err;
 	struct snd_soc_codec *codec = rtd->codec;
 	struct snd_soc_dapm_context *dapm = &codec->dapm;
-	struct snd_soc_dai *cpu_dai = rtd->cpu_dai;
+//	struct snd_soc_dai *cpu_dai = rtd->cpu_dai;
 	struct pm_gpio jack_gpio_cfg = {
 		.direction = PM_GPIO_DIR_IN,
 		.pull = PM_GPIO_PULL_UP_1P5,
@@ -1517,3 +1517,4 @@ module_exit(msm8960_audio_exit);
 
 MODULE_DESCRIPTION("ALSA SoC MSM8960");
 MODULE_LICENSE("GPL v2");
+
