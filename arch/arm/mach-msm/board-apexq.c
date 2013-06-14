@@ -344,7 +344,7 @@ static struct msm_gpiomux_config msm8960_sec_ts_configs[] = {
 #define MSM8960_FW_START    MSM8960_FIXED_AREA_START
 #define MSM_ION_ADSP_SIZE   SZ_8M
 
-static unsigned msm_ion_sf_size = MSM_ION_SF_SIZE;
+//static unsigned msm_ion_sf_size = MSM_ION_SF_SIZE;
 #else
 #define MSM_CONTIG_MEM_SIZE  0x110C000
 #define MSM_ION_HEAP_NUM    1
