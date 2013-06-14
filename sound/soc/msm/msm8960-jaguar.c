@@ -29,7 +29,7 @@
 #include <mach/socinfo.h>
 #include "msm-pcm-routing.h"
 #include "../codecs/wcd9310.h"
-#include <linux/mfd/wcd9310/core.h>
+#include <linux/mfd/wcd9xxx/core.h>
 #include <mach/msm8960-gpio.h>
 
 /* 8960 machine driver */
@@ -1489,6 +1489,7 @@ static struct snd_soc_dai_link msm8960_i2s_be_dai[] = {
 		.init = &msm8960_i2s_audrx_init,
 		.be_hw_params_fixup = msm8960_i2s_rx_be_hw_params_fixup,
 		.ops = &msm8960_i2s_be_ops,
+		.ignore_pmdown_time = 1, /* this dainlink has playback support */
 	},
 	{
 		.name = LPASS_BE_PRI_I2S_TX,
@@ -1517,6 +1518,7 @@ static struct snd_soc_dai_link msm8960_slimbus_be_dai[] = {
 		.init = &msm8960_audrx_init,
 		.be_hw_params_fixup = msm8960_slim_0_rx_be_hw_params_fixup,
 		.ops = &msm8960_be_ops,
+		.ignore_pmdown_time = 1, /* this dainlink has playback support */
 	},
 	{
 		.name = LPASS_BE_SLIMBUS_0_TX,
