@@ -4797,7 +4797,6 @@ static struct platform_device *apexq_devices[] __initdata = {
 	&msm_8960_q6_mss_fw,
 	&msm_8960_riva,
 	&msm_pil_tzapps,
-	&msm_pil_dsps,
 	&msm_pil_vidc,
 	&msm8960_device_otg,
 	&msm8960_device_gadget_peripheral,
@@ -4805,7 +4804,6 @@ static struct platform_device *apexq_devices[] __initdata = {
 	&android_usb_device,
 	&msm_pcm,
 	&msm_multi_ch_pcm,
-	&msm_lowlatency_pcm,
 	&msm_pcm_routing,
 #ifdef CONFIG_SLIMBUS_MSM_CTRL
 	&msm_cpudai0,
