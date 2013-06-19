@@ -11,7 +11,7 @@
  * GNU General Public License for more details.
  *
  */
-#pragma GCC diagnostic ignored "-Wunused-variable"
+
 #include <linux/kernel.h>
 #include <linux/platform_device.h>
 #include <linux/io.h>
@@ -31,10 +31,10 @@
 #include "devices-msm8x60.h"
 #include "board-8960.h"
 
-#if defined(CONFIG_BATTERY_SAMSUNG)
-#include <linux/battery/sec_battery.h>
-#include <linux/battery/sec_fuelgauge.h>
-#include <linux/battery/sec_charger.h>
+#if defined(CONFIG_JF_BATTERY_SAMSUNG)
+#include <linux/jf_battery/sec_battery.h>
+#include <linux/jf_battery/sec_fuelgauge.h>
+#include <linux/jf_battery/sec_charger.h>
 
 #define SEC_BATTERY_PMIC_NAME ""
 
@@ -531,8 +531,8 @@ static sec_battery_platform_data_t sec_battery_pdata = {
 
 	.full_check_type = SEC_BATTERY_FULLCHARGED_CHGPSY,
 	.full_check_count = 3,
-	.full_check_adc_1st = 20000,
-	.full_check_adc_2nd = 20000,
+//	.full_check_adc_1st = 20000,
+//	.full_check_adc_2nd = 20000,
 	.chg_gpio_full_check = 0,
 	.chg_polarity_full_check = 1,
 	.full_condition_type = 0,
