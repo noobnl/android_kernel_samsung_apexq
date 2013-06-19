@@ -11,9 +11,6 @@
  *
  */
 
-#pragma GCC diagnostic ignored "-Wunused-variable"
-#pragma GCC diagnostic ignored "-Wunused-function"
-
 #define pr_fmt(fmt)	"%s: " fmt, __func__
 
 #include <linux/module.h>
@@ -382,6 +379,7 @@ static int is_pm8921_sec_charger_using(void)
 	return 1;
 }
 
+#if !defined(CONFIG_MACH_APEXQ)
 static int sec_bat_get_fuelgauge_data(struct pm8921_chg_chip *chip, int type)
 {
 #if defined(CONFIG_BATTERY_MAX17040) || \
@@ -450,6 +448,7 @@ static int sec_bat_set_fuelgauge_data(struct pm8921_chg_chip *chip, int type)
 	return -ENODEV;
 #endif
 }
+#endif
 
 static int pm_chg_masked_write(struct pm8921_chg_chip *chip, u16 addr,
 							u8 mask, u8 val)
@@ -576,6 +575,7 @@ static int pm_chg_charge_dis(struct pm8921_chg_chip *chip, int disable)
 				disable ? CHG_CHARGE_DIS_BIT : 0);
 }
 
+#if !defined(CONFIG_MACH_APEXQ)
 static bool pm_is_chg_charge_dis_bit_set(struct pm8921_chg_chip *chip)
 {
 	u8 temp = 0;
@@ -587,6 +587,7 @@ static bool pm_is_chg_charge_dis_bit_set(struct pm8921_chg_chip *chip)
 
 	return !!(temp & CHG_CHARGE_DIS_BIT);
 }
+#endif
 
 #define PM8921_CHG_V_MIN_MV	3240
 #define PM8921_CHG_V_STEP_MV	20
@@ -958,6 +959,7 @@ static int pm_chg_iweak_set(struct pm8921_chg_chip *chip, int milliamps)
 					 temp);
 }
 
+#if !defined(CONFIG_MACH_APEXQ)
 #define PM8921_CHG_BATT_TEMP_THR_COLD	BIT(1)
 #define PM8921_CHG_BATT_TEMP_THR_COLD_SHIFT	1
 static int pm_chg_batt_cold_temp_config(struct pm8921_chg_chip *chip,
@@ -985,6 +987,7 @@ static int pm_chg_batt_hot_temp_config(struct pm8921_chg_chip *chip,
 					PM8921_CHG_BATT_TEMP_THR_HOT,
 					 temp);
 }
+#endif
 
 static int64_t read_battery_id(struct pm8921_chg_chip *chip)
 {
@@ -1130,6 +1133,7 @@ static int is_battery_charging(int fsm_state)
 	return 0;
 }
 
+#if !defined(CONFIG_MACH_APEXQ)
 static void bms_notify(struct work_struct *work)
 {
 	struct bms_notify *n = container_of(work, struct bms_notify, work);
@@ -1141,6 +1145,7 @@ static void bms_notify(struct work_struct *work)
 		n->is_battery_full = 0;
 	}
 }
+#endif
 
 static void bms_notify_check(struct pm8921_chg_chip *chip)
 {
@@ -1261,6 +1266,7 @@ static int get_prop_battery_uvolts(struct pm8921_chg_chip *chip)
 #endif
 }
 
+#if !defined(CONFIG_MACH_APEXQ)
 static unsigned int voltage_based_capacity(struct pm8921_chg_chip *chip)
 {
 	unsigned int current_voltage_uv = get_prop_battery_uvolts(chip);
@@ -1276,6 +1282,7 @@ static unsigned int voltage_based_capacity(struct pm8921_chg_chip *chip)
 		return (current_voltage_mv - low_voltage) * 100
 		    / (high_voltage - low_voltage);
 }
+#endif
 
 static int get_prop_batt_capacity(struct pm8921_chg_chip *chip)
 {
@@ -2769,6 +2776,7 @@ static void set_appropriate_battery_current(struct pm8921_chg_chip *chip)
 	pm_chg_ibatmax_set(the_chip, chg_current);
 }
 
+#if !defined(CONFIG_MACH_APEXQ)
 #define TEMP_HYSTERISIS_DEGC 2
 static void battery_cool(bool enter)
 {
@@ -2838,6 +2846,7 @@ static int configure_btm(struct pm8921_chg_chip *chip)
 
 	return rc;
 }
+#endif
 
 /**
  * set_disable_status_param -
