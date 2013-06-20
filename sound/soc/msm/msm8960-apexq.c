@@ -74,7 +74,6 @@ static int msm8960_slim_0_sample_rate = 48000;
 
 static int msm8960_btsco_rate = SAMPLE_RATE_8KHZ;
 static int msm8960_btsco_ch = 1;
-static int msm8960_auxpcm_rate = SAMPLE_RATE_8KHZ;
 
 static struct clk *codec_clk;
 static int clk_users;
