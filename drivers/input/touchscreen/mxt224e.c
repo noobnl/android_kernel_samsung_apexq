@@ -13,6 +13,8 @@
  *
  */
 
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/input.h>
@@ -2744,7 +2746,6 @@ static int mxt224_probe(struct i2c_client *client,
 		goto err_init_drv;
 	}
 
-#if !defined(CONFIG_MACH_APEXQ)
 	if (data->family_id == 0x80) {
 		/*  : MXT-224 */
 		tsp_config = (u8 **)pdata->config;
@@ -2759,7 +2760,6 @@ static int mxt224_probe(struct i2c_client *client,
 		data->movfilter_charging = pdata->movfilter_charging;
 		printk(KERN_INFO"[TSP] TSP chip is MXT224\n");
 	} else if (data->family_id == 0x81) {
-#endif
 		/* tsp_family_id - 0x81 : MXT-224E */
 		tsp_config = (u8 **)pdata->config_e;
 		data->t48_config_batt_e = pdata->t48_config_batt_e;
@@ -2784,12 +2784,11 @@ static int mxt224_probe(struct i2c_client *client,
 				mxt224_init_touch_driver(data);
 			}
 		}
-#if !defined(CONFIG_MACH_APEXQ)
 	} else  {
 		printk(KERN_ERR"ERROR : There is no valid TSP ID\n");
 		tsp_probe_num = 6;
 	}
-#endif
+
 	for (i = 0; tsp_config[i][0] != RESERVED_T255; i++) {
 		ret = write_config(data, tsp_config[i][0],
 							tsp_config[i] + 1);

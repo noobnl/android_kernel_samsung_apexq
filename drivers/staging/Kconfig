@@ -136,6 +136,4 @@ source "drivers/staging/ozwpan/Kconfig"
 
 source "drivers/staging/prima/Kconfig"
 
-source "drivers/staging/jf_battery/Kconfig"
-
 endif # STAGING
