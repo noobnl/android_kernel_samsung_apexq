@@ -313,6 +313,14 @@ void msm_restart(char mode, const char *cmd)
 
 	pm8xxx_reset_pwr_off(1);
 
+#ifdef CONFIG_SEC_DEBUG
+	/* onlyjazz.ed26  : avoid ioreamp is possible
+		because arch_reset can be called in interrupt context */
+	if (!restart_reason)
+		restart_reason = ioremap_nocache((unsigned long)(MSM_IMEM_BASE \
+						+ RESTART_REASON_ADDR), SZ_4K);
+#endif
+
 	if (cmd != NULL) {
 		if (!strncmp(cmd, "bootloader", 10)) {
 			__raw_writel(0x77665500, restart_reason);
