@@ -4707,7 +4707,6 @@ static struct platform_device *common_devices[] __initdata = {
 #ifndef CONFIG_MSM_DSPS
 	&msm8960_device_qup_i2c_gsbi12,
 #endif
-	&msm_slim_ctrl,
 	&msm_device_wcnss_wlan,
 #ifdef CONFIG_RADIO_IRIS
 	&msm_device_iris_fm,
@@ -5576,6 +5575,7 @@ static void __init samsung_apexq_init(void)
 	}
 #endif
 #if defined(CONFIG_SLIMBUS_MSM_CTRL)
+        platform_device_register(&msm_slim_ctrl);
         slim_register_board_info(msm_slim_devices,
                 ARRAY_SIZE(msm_slim_devices));
 #endif
