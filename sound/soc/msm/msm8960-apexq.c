@@ -85,7 +85,6 @@ static struct snd_soc_jack hs_jack;
 static struct snd_soc_jack button_jack;
 static struct snd_soc_jack volumedown_jack;
 static struct snd_soc_jack volumeup_jack;
-static atomic_t auxpcm_rsc_ref;
 
 static int msm8960_enable_codec_ext_clk(struct snd_soc_codec *codec, int enable,
 					bool dapm);
@@ -139,21 +138,8 @@ static void msm8960_enable_ext_spk_amp_gpio(u32 spk_amp_gpio)
 		}
 
 	} else if (spk_amp_gpio == top_spk_pamp_gpio) {
-
-		ret = gpio_request(top_spk_pamp_gpio, "TOP_SPK_AMP");
-		if (ret) {
-			pr_err("%s: Error requesting GPIO %d\n", __func__,
-				top_spk_pamp_gpio);
-			return;
-		}
-		ret = pm8xxx_gpio_config(top_spk_pamp_gpio, &param);
-		if (ret)
-			pr_err("%s: Failed to configure Top Spk Ampl"
-				" gpio %u\n", __func__, top_spk_pamp_gpio);
-		else {
 			pr_debug("%s: enable Top spkr amp gpio\n", __func__);
 			gpio_direction_output(top_spk_pamp_gpio, 1);
-		}
 	} else {
 		pr_err("%s: ERROR : Invalid External Speaker Ampl GPIO."
 			" gpio = %u\n", __func__, spk_amp_gpio);
@@ -517,11 +503,6 @@ static const struct soc_enum msm8960_btsco_enum[] = {
 		SOC_ENUM_SINGLE_EXT(2, btsco_rate_text),
 };
 
-static const char *auxpcm_rate_text[] = {"rate_8000", "rate_16000"};
-static const struct soc_enum msm8960_auxpcm_enum[] = {
-		SOC_ENUM_SINGLE_EXT(2, auxpcm_rate_text),
-};
-
 static int msm8960_slim_0_rx_ch_get(struct snd_kcontrol *kcontrol,
 	struct snd_ctl_elem_value *ucontrol)
 {
@@ -626,36 +607,6 @@ static int msm8960_btsco_rate_put(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
-static int msm8960_auxpcm_rate_get(struct snd_kcontrol *kcontrol,
-				struct snd_ctl_elem_value *ucontrol)
-{
-	pr_debug("%s: msm8960_auxpcm_rate  = %d", __func__,
-		msm8960_auxpcm_rate);
-	ucontrol->value.integer.value[0] = msm8960_auxpcm_rate;
-	return 0;
-}
-
-static int msm8960_auxpcm_rate_put(struct snd_kcontrol *kcontrol,
-				struct snd_ctl_elem_value *ucontrol)
-{
-	switch (ucontrol->value.integer.value[0]) {
-	case 0:
-		msm8960_auxpcm_rate = SAMPLE_RATE_8KHZ;
-		break;
-	case 1:
-		msm8960_auxpcm_rate = SAMPLE_RATE_16KHZ;
-		break;
-	default:
-		msm8960_auxpcm_rate = SAMPLE_RATE_8KHZ;
-		break;
-	}
-	pr_debug("%s: msm8960_auxpcm_rate = %d"
-		"ucontrol->value.integer.value[0] = %d\n", __func__,
-		msm8960_auxpcm_rate,
-		(int)ucontrol->value.integer.value[0]);
-	return 0;
-}
-
 static const struct snd_kcontrol_new tabla_msm8960_controls[] = {
 	SOC_ENUM_EXT("Speaker Function", msm8960_enum[0], msm8960_get_spk,
 		msm8960_set_spk),
@@ -667,8 +618,6 @@ static const struct snd_kcontrol_new tabla_msm8960_controls[] = {
 		msm8960_slim_0_sample_rate_get, msm8960_slim_0_sample_rate_put),
 	SOC_ENUM_EXT("Internal BTSCO SampleRate", msm8960_btsco_enum[0],
 		msm8960_btsco_rate_get, msm8960_btsco_rate_put),
-	SOC_ENUM_EXT("AUX PCM SampleRate", msm8960_auxpcm_enum[0],
-		msm8960_auxpcm_rate_get, msm8960_auxpcm_rate_put),
 
 };
 
@@ -1500,7 +1449,6 @@ static int __init msm8960_audio_init(void)
 		msm8960_headset_gpios_configured = 1;
 
 	mutex_init(&cdc_mclk_mutex);
-	atomic_set(&auxpcm_rsc_ref, 0);
 	return ret;
 
 }
