@@ -36,6 +36,11 @@ config ISX012
 	default n
 	---help---
 	SONY 5 MP CMOS Sensor
+config DB8131M
+	bool "Sensor DB8131M (1.3M)"
+	default n
+	---help---
+	SONY 1.3 MP CMOS Sensor
 config S5C73M3
 	bool "Sensor S5C73M3 (8M)"
 	default n

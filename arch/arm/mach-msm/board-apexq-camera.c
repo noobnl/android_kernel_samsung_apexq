@@ -655,7 +655,7 @@ static struct msm_camera_device_platform_data msm_camera_csi_device_data[] = {
 	{
 		.ioclk.mclk_clk_rate = 24000000,
 		.ioclk.vfe_clk_rate  = 228570000,
-		.csid_core = 0,
+        .csid_core = 0,
 		.cam_bus_scale_table = &cam_bus_client_pdata,
 	},
 	{
@@ -676,6 +676,7 @@ static struct msm_camera_device_platform_data msm_camera_csi_device_data[] = {
 		.is_csid   = 1,
 		.is_ispif  = 1,
 		.is_vpe    = 1,
+        .is_csic = 1,
 		.cam_bus_scale_table = &cam_bus_client_pdata,
 	},
 	{
@@ -684,6 +685,7 @@ static struct msm_camera_device_platform_data msm_camera_csi_device_data[] = {
 		.is_csid   = 1,
 		.is_ispif  = 1,
 		.is_vpe    = 1,
+        .is_csic = 1,
 		.cam_bus_scale_table = &cam_bus_client_pdata,
 	},
 };

@@ -22,6 +22,7 @@
 #include <media/v4l2-subdev.h>
 #include <mach/gpio.h>
 #include <mach/camera.h>
+#include <mach/board.h>
 
 #include <asm/mach-types.h>
 #include <mach/vreg.h>
@@ -394,7 +395,7 @@ static int isx012_write_regs_from_sd(char *name)
 #endif
 
 
-static int isx012_get_LowLightCondition()
+static int isx012_get_LowLightCondition(void)
 {
 	int err = -1;
 	short unsigned int r_data2[2] = {0, 0};
@@ -1380,15 +1381,15 @@ void sensor_native_control(void __user *arg)
 		}
 		break;
 
-	case EXT_CAM_FLASH:
-		if (ctrl_info.value_1 == 0) {/*off*/
-			isx012_set_flash(0);
-		} else if (ctrl_info.value_1 == 1) {/*MOVIEMODE_FLASH*/
-			isx012_set_flash(MOVIEMODE_FLASH);
-		} else if (ctrl_info.value_1 == 2) {/*FLASHMODE_FLASH*/
-			isx012_set_flash(FLASHMODE_FLASH);
-		}
-		break;
+            /*
+             case EXT_CAM_FLASH:
+             if (ctrl_info.value_1 == 0) {
+             isx012_set_flash(0);
+             } else if (ctrl_info.value_1 == 1) {		isx012_set_flash(MOVIEMODE_FLASH);
+             } else if (ctrl_info.value_1 == 2) {
+             isx012_set_flash(FLASHMODE_FLASH);
+             }
+             break;*/
 
 	case EXT_CAM_FLASH_MODE:
 		isx012_ctrl->flash_mode = ctrl_info.value_1;
@@ -1675,7 +1676,7 @@ static struct platform_driver msm_camera_driver = {
 	.probe = __isx012_probe,
 	.driver = {
 		.name = "msm_camera_isx012",
-		.owner = THIS_MODULE,
+		.owner = "samsung/sony"
 	},
 };
 
