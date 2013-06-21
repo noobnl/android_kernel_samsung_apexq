@@ -5442,6 +5442,16 @@ static void __init msm8960_tsens_init(void)
 
 static void __init samsung_apexq_init(void)
 {
+	int ret;
+	struct pm_gpio tparam = {
+		.direction = PM_GPIO_DIR_OUT,
+		.output_buffer = PM_GPIO_OUT_BUF_CMOS,
+		.output_value = 1,
+		.pull = PM_GPIO_PULL_NO,
+		.vin_sel = PM_GPIO_VIN_S4,
+		.out_strength = PM_GPIO_STRENGTH_MED,
+		.function = PM_GPIO_FUNC_NORMAL,
+	};
 #ifdef CONFIG_SEC_DEBUG
 	sec_debug_init();
 #endif
@@ -5575,6 +5585,26 @@ static void __init samsung_apexq_init(void)
 	}
 #endif
 #if defined(CONFIG_SLIMBUS_MSM_CTRL)
+
+	ret = gpio_request(PM8921_GPIO_PM_TO_SYS(38), "CDC_RESET");
+	if (ret) {
+		printk("%s: Failed to request gpio %d\n", __func__,
+			PM8921_GPIO_PM_TO_SYS(38));
+	} else {
+		ret = pm8xxx_gpio_config(PM8921_GPIO_PM_TO_SYS(38), &tparam);
+		if (ret)
+			printk("%s: Failed to configure gpio\n", __func__);
+		else {
+			gpio_direction_output(PM8921_GPIO_PM_TO_SYS(38), 1);
+			msleep(20);
+			gpio_direction_output(PM8921_GPIO_PM_TO_SYS(38), 0);
+			msleep(20);
+			gpio_direction_output(PM8921_GPIO_PM_TO_SYS(38), 1);
+			msleep(20);
+		}
+		gpio_free(PM8921_GPIO_PM_TO_SYS(38));
+	}
+	
         platform_device_register(&msm_slim_ctrl);
         slim_register_board_info(msm_slim_devices,
                 ARRAY_SIZE(msm_slim_devices));
